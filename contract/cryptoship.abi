@@ -1,0 +1,133 @@
+{
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu Nov 22 23:20:09 2018",
+    "version": "eosio::abi/1.0",
+    "structs": [
+        {
+            "name": "board",
+            "base": "",
+            "fields": [
+                {
+                    "name": "tiles",
+                    "type": "[25]"
+                },
+                {
+                    "name": "commitment",
+                    "type": "checksum256"
+                }
+            ]
+        },
+        {
+            "name": "cleanup",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "game",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "player1",
+                    "type": "name"
+                },
+                {
+                    "name": "player2",
+                    "type": "name"
+                },
+                {
+                    "name": "bet_amount_per_player",
+                    "type": "asset"
+                },
+                {
+                    "name": "expires_at",
+                    "type": "time_point_sec"
+                },
+                {
+                    "name": "board1",
+                    "type": "board"
+                },
+                {
+                    "name": "board2",
+                    "type": "board"
+                },
+                {
+                    "name": "current_player",
+                    "type": "name"
+                },
+                {
+                    "name": "status",
+                    "type": "game_status"
+                }
+            ]
+        },
+        {
+            "name": "init",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "testreset",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "turn",
+            "base": "",
+            "fields": [
+                {
+                    "name": "game_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "player",
+                    "type": "name"
+                },
+                {
+                    "name": "attack_responses",
+                    "type": "uint8[]"
+                },
+                {
+                    "name": "attacks",
+                    "type": "uint8[]"
+                }
+            ]
+        }
+    ],
+    "types": [],
+    "actions": [
+        {
+            "name": "cleanup",
+            "type": "cleanup",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "init",
+            "type": "init",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "testreset",
+            "type": "testreset",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "turn",
+            "type": "turn",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "games",
+            "type": "game",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }
+    ],
+    "ricardian_clauses": [],
+    "abi_extensions": []
+}
