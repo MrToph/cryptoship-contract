@@ -3,7 +3,7 @@ const path = require(`path`)
 const childProcess = require(`child_process`)
 const ejs = require(`ejs`)
 
-const contractDir = `./contract`
+const contractDir = `./build`
 const actionsDir = `./actions`
 const actionTemplatesDir = `./scripts/create_actions`
 

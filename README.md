@@ -10,9 +10,19 @@ Edges are the possible contract actions available from each state.
 
 # Template
 
-## eosio-cpp
+Requires `eosio-cpp (>= v1.4.0)` to be installed from the [eosio.cdt](https://github.com/EOSIO/eosio.cdt) package to compile the smart contract.
 
-Requires `eosio-cpp (v1.3.2)` to be installed from the [eosio.cdt](https://github.com/EOSIO/eosio.cdt) package to compile the smart contract.
+## Compiling
+
+This template uses `cmake` to build the contract. Run the following commands once to setup the process:
+
+```
+mkdir build
+cd build
+cmake ../contract
+```
+
+Now you can run `npm run compile` which will run `make` to create the `.wasm` and `.abi` in `/build`.
 
 ## Deployment
 

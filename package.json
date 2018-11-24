@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "test": "jest --runInBand",
-    "compile": "eosio-cpp contract/cryptoship.cpp -o contract/cryptoship.wasm --abigen --contract=cryptoship",
+    "compile": "make -C build",
+    "compile_eosio": "eosio-cpp contract/cryptoship.cpp -o contract/cryptoship.wasm --abigen --contract=cryptoship",
     "deploy": "npm run compile && node scripts/deploy.js",
     "init": "node scripts/init.js",
     "create_actions": "node scripts/create_actions/index.js",

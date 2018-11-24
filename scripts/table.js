@@ -3,7 +3,7 @@ const { api } = require(`../config`)
 const { getDeployableFilesFromDir } = require(`../utils`)
 
 const { CONTRACT_ACCOUNT } = process.env
-const contractDir = `./contract`
+const contractDir = `./build`
 
 async function script() {
     const tableName = process.argv[2]

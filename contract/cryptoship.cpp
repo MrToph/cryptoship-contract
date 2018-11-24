@@ -2,7 +2,7 @@
 
 // https://eosio.stackexchange.com/a/1349/118
 #include "./cleanup/cleanup.cpp"
-#include "./FSM/fsm.cpp"
+#include "./fsm/fsm.cpp"
 
 using namespace eosio;
 using namespace std;

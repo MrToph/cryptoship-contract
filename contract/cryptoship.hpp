@@ -8,7 +8,7 @@
 #include <eosiolib/time.hpp>
 
 #include "board/board.hpp"
-#include "FSM/fsm.hpp"
+#include "fsm/fsm.hpp"
 
 #define EOS_SYMBOL symbol("EOS", 4)
 
