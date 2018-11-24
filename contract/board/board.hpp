@@ -31,12 +31,21 @@ struct board
     tile tiles[TILES_ARR_SIZE];
     capi_checksum256 commitment;
 
-    tile getXY(uint8_t row, uint8_t column) const
+    board() : board(capi_checksum256()) {
+    }
+
+    board(capi_checksum256 commitment) : commitment(commitment) {
+        for(tile& t : tiles) {
+            t = UNKNWON;
+        }
+    }
+
+    tile get_xy(uint8_t row, uint8_t column) const
     {
         return tiles[row * BOARD_SIZE + column];
     }
 
-    uint8_t getMaxNumberOfShots() const {
+    uint8_t get_max_shots_amount() const {
         uint8_t shots = 0;
         for (const std::pair<tile, uint8_t> &pair : ship_shots_map)
         {
@@ -46,9 +55,9 @@ struct board
     }
 
     // calculates max shots for the player by subtracting destroyed ships' shots
-    uint8_t getNumberOfShots()
+    uint8_t get_shots_amount()
     {
-        uint8_t shots = getMaxNumberOfShots();
+        uint8_t shots = get_max_shots_amount();
         
         for (auto t : tiles)
         {
@@ -96,7 +105,7 @@ struct board
         return true;
     }
 
-    EOSLIB_SERIALIZE(board, (tiles))
+    EOSLIB_SERIALIZE(board, (tiles)(commitment))
 };
 
 } // namespace logic

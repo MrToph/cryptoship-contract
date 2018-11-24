@@ -18,8 +18,8 @@ void cryptoship::create_game(name player, const asset& quantity)
     // any step between 0.1 and 100 EOS
     eosio_assert(quantity.amount == 1E3 || quantity.amount == 1E4 || quantity.amount == 1E5 || quantity.amount == 1E6, "Must pay any of 0.1 / 1.0 / 10.0 / 100.0 EOS");
 
+    // default constructor initializes game data correctly
     fsm::automaton machine;
-    machine.create_game();
     // make player pay for RAM
     games.emplace(player, [&](game &g) {
         // auto-increment key

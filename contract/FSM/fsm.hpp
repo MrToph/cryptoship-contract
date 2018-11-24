@@ -6,6 +6,8 @@
 #include <eosiolib/asset.hpp>
 #include <eosiolib/time.hpp>
 
+#include "../board/board.hpp"
+
 namespace fsm
 {
 // finite state machine states
@@ -30,9 +32,12 @@ enum state : uint8_t
 
 struct game_data
 {
+    game_data() : board1(), board2(), state(CREATED) {}
     logic::board board1;
     logic::board board2;
     state state;
+
+    EOSLIB_SERIALIZE(game_data, (board1)(board2)(state))
 };
 
 class automaton
@@ -43,7 +48,6 @@ class automaton
     automaton(const game_data &gd)
         : data(gd) {}
 
-    void create_game();
     void join_game();
 
     game_data data;

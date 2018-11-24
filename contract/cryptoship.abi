@@ -1,7 +1,21 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Sat Nov 24 17:10:37 2018",
-    "version": "eosio::abi/1.0",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Sat Nov 24 18:36:44 2018",
+    "version": "eosio::abi/1.1",
     "structs": [
+        {
+            "name": "board",
+            "base": "",
+            "fields": [
+                {
+                    "name": "tiles",
+                    "type": "[25]"
+                },
+                {
+                    "name": "commitment",
+                    "type": "checksum256"
+                }
+            ]
+        },
         {
             "name": "cleanup",
             "base": "",
@@ -121,5 +135,6 @@
         }
     ],
     "ricardian_clauses": [],
+    "variants": [],
     "abi_extensions": []
 }
