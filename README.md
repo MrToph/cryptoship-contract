@@ -1,4 +1,14 @@
-# Setup
+# cryptoship
+
+A battleship like game on the EOS blockchain.
+
+## State Machine
+
+Edges are the possible contract actions available from each state.
+
+![State Machine](/.README/ch04_state_machine.png?raw=true "State Machine")
+
+# Template
 
 ## eosio-cpp
 
