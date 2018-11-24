@@ -24,8 +24,8 @@ static const std::map<tile, uint8_t> ship_shots_map = {
     {ATTACK_SHIP2, 1},
     {ATTACK_SHIP3, 1}};
 
-// a board stores board information for a single player
-// the player's ships and the opposing player's attacks
+// a board stores (hidden) board information for a single player,
+// i.e., the opposing player's attacks and their announced results
 struct board
 {
     tile tiles[TILES_ARR_SIZE];

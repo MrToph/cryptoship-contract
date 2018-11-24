@@ -8,6 +8,7 @@
 #include <eosiolib/time.hpp>
 
 #include "board/board.hpp"
+#include "FSM/fsm.hpp"
 
 #define EOS_SYMBOL symbol("EOS", 4)
 
@@ -18,7 +19,7 @@ static const uint32_t EXPIRE_OPEN = 60 * 60 * 24 * 7;
 // 1 day
 static const uint32_t EXPIRE_TURN = 60 * 60 * 24 * 1;
 // 3 days
-static const uint32_t EXPIRE_OVER = 60 * 60 * 24 * 3;
+static const uint32_t EXPIRE_GAME_OVER = 60 * 60 * 24 * 3;
 
 CONTRACT cryptoship : public eosio::contract
 {
@@ -26,31 +27,23 @@ CONTRACT cryptoship : public eosio::contract
     cryptoship(eosio::name receiver, eosio::name code, eosio::datastream<const char *> ds)
       : contract(receiver, code, ds), games(receiver, receiver.value) {}
 
-    enum game_status : uint8_t {
-        OPEN,
-        RUNNING,
-        OVER
-    };
-
     TABLE game {
+        // game meta information
         uint64_t id;
         eosio::name player1;
         eosio::name player2;
         eosio::asset bet_amount_per_player;
         eosio::time_point_sec expires_at;
-        logic::board board1;
-        logic::board board2;
-        // whose player's current turn it is
-        eosio::name current_player;
-        game_status status;
+        // actual game data like ships, hits, etc.
+        fsm::game_data game_data;
 
-        // defines the primary key
         auto primary_key() const { return id; }
         uint64_t by_expires_at() const { return expires_at.sec_since_epoch(); }
         uint64_t by_player1() const { return player1.value; }
         uint64_t by_player2() const { return player2.value; }
+        uint64_t by_game_state() const { return game_data.state; }
 
-        EOSLIB_SERIALIZE(game, (id)(player1)(player2)(expires_at)(board1)(board2)(current_player)(status))
+        EOSLIB_SERIALIZE(game, (id)(player1)(player2)(expires_at)(game_data))
     };
 
     typedef eosio::multi_index<
@@ -62,8 +55,8 @@ CONTRACT cryptoship : public eosio::contract
       >
       games_t;
 
-    void create_game(eosio::name player, eosio::asset quantity);
-    void join_game(eosio::name player, uint64_t game_id, eosio::asset quantity);
+    void create_game(eosio::name player, const eosio::asset& quantity);
+    void join_game(eosio::name player, uint64_t game_id, const eosio::asset& quantity);
 
     #ifndef PRODUCTION
     ACTION testreset();

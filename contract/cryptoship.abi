@@ -1,21 +1,7 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu Nov 22 23:20:09 2018",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Sat Nov 24 17:10:37 2018",
     "version": "eosio::abi/1.0",
     "structs": [
-        {
-            "name": "board",
-            "base": "",
-            "fields": [
-                {
-                    "name": "tiles",
-                    "type": "[25]"
-                },
-                {
-                    "name": "commitment",
-                    "type": "checksum256"
-                }
-            ]
-        },
         {
             "name": "cleanup",
             "base": "",
@@ -46,6 +32,16 @@
                     "type": "time_point_sec"
                 },
                 {
+                    "name": "game_data",
+                    "type": "game_data"
+                }
+            ]
+        },
+        {
+            "name": "game_data",
+            "base": "",
+            "fields": [
+                {
                     "name": "board1",
                     "type": "board"
                 },
@@ -54,12 +50,8 @@
                     "type": "board"
                 },
                 {
-                    "name": "current_player",
-                    "type": "name"
-                },
-                {
-                    "name": "status",
-                    "type": "game_status"
+                    "name": "state",
+                    "type": "state"
                 }
             ]
         },

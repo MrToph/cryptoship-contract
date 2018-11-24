@@ -2,6 +2,7 @@
 
 // https://eosio.stackexchange.com/a/1349/118
 #include "./cleanup/cleanup.cpp"
+#include "./FSM/fsm.cpp"
 
 using namespace eosio;
 using namespace std;
@@ -11,27 +12,40 @@ void cryptoship::init()
     require_auth(_self);
 }
 
-void cryptoship::create_game(name player, asset quantity)
+void cryptoship::create_game(name player, const asset& quantity)
 {
     require_auth(player);
     // any step between 0.1 and 100 EOS
     eosio_assert(quantity.amount == 1E3 || quantity.amount == 1E4 || quantity.amount == 1E5 || quantity.amount == 1E6, "Must pay any of 0.1 / 1.0 / 10.0 / 100.0 EOS");
 
+    fsm::automaton machine;
+    machine.create_game();
     // make player pay for RAM
     games.emplace(player, [&](game &g) {
         // auto-increment key
         g.id = games.available_primary_key();
         g.player1 = player;
         g.bet_amount_per_player = quantity;
-        g.status = OPEN;
         g.expires_at = time_point_sec(now() + EXPIRE_OPEN);
-        g.board1 = logic::board{};
+        g.game_data = machine.data;
     });
 }
 
-void cryptoship::join_game(name player, uint64_t game_id, asset quantity)
+void cryptoship::join_game(name player, uint64_t game_id, const asset& quantity)
 {
-    
+    const auto game = games.find(game_id);
+    eosio_assert(game != games.end(), "Game not found");
+    eosio_assert(game->bet_amount_per_player == quantity, "game has a different bet amount");
+
+    fsm::automaton machine(game->game_data);
+    machine.join_game();
+
+    // make second player pay for the updates
+    games.modify(game, player, [&]( auto& g ) {
+        g.player2 = player;
+        g.expires_at = time_point_sec(now() + EXPIRE_OPEN);
+        g.game_data = machine.data;
+    });
 }
 
 void cryptoship::transfer(name from, name to, asset quantity, string memo)
@@ -52,8 +66,6 @@ void cryptoship::transfer(name from, name to, asset quantity, string memo)
     }
     else {
         uint64_t game_id = std::stoull(memo);
-        const auto game = games.find(game_id);
-        eosio_assert(game != games.end() && game->status == OPEN, "Game not found or already started");
         join_game(from, game_id, quantity);
     }
 }
