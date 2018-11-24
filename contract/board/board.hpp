@@ -8,8 +8,8 @@
 
 namespace logic
 {
-static const uint8_t BOARD_SIZE = 5;
-static const uint8_t TILES_ARR_SIZE = BOARD_SIZE * BOARD_SIZE;
+static const uint8_t BOARD_WIDTH = 5;
+static const uint8_t TILES_SIZE = BOARD_WIDTH * BOARD_WIDTH;
 enum tile : uint8_t
 {
     UNKNWON,
@@ -28,21 +28,22 @@ static const std::map<tile, uint8_t> ship_shots_map = {
 // i.e., the opposing player's attacks and their announced results
 struct board
 {
-    tile tiles[TILES_ARR_SIZE];
-    capi_checksum256 commitment;
+    // is used as vector<tile>, but cannot be serialized by EOS
+    std::vector<uint8_t> tiles;
+    eosio::checksum256 commitment;
 
-    board() : board(capi_checksum256()) {
+    board() : board(eosio::checksum256()) {
     }
 
-    board(capi_checksum256 commitment) : commitment(commitment) {
-        for(tile& t : tiles) {
-            t = UNKNWON;
+    board(eosio::checksum256 commitment) : commitment(commitment) {
+        for(int i = 0; i < TILES_SIZE; i++) {
+            tiles.emplace_back(UNKNWON);
         }
     }
 
     tile get_xy(uint8_t row, uint8_t column) const
     {
-        return tiles[row * BOARD_SIZE + column];
+        return (tile)tiles[row * BOARD_WIDTH + column];
     }
 
     uint8_t get_max_shots_amount() const {
@@ -59,11 +60,11 @@ struct board
     {
         uint8_t shots = get_max_shots_amount();
         
-        for (auto t : tiles)
+        for (uint8_t t : tiles)
         {
             if (t == ATTACK_SHIP1 || t == ATTACK_SHIP2 || t == ATTACK_SHIP3)
             {
-                shots -= ship_shots_map.at(t);
+                shots -= ship_shots_map.at((tile)t);
             }
         }
         return shots;
@@ -80,17 +81,17 @@ struct board
         for (int i = 0; i < 3; i++)
         {
             int shipIndex = revealed_ship_indexes[i];
-            tile announced_tile = tiles[shipIndex];
+            uint8_t announced_tile = tiles[shipIndex];
             // shipIndex must be in range and announced tile must be one of unknown, unrevealed or the correct ship
-            if (shipIndex >= TILES_ARR_SIZE ||
+            if (shipIndex >= TILES_SIZE ||
                 !(announced_tile == UNKNWON || announced_tile == ATTACK_UNREVEALED || announced_tile == (ATTACK_SHIP1 + i)))
                 return false;
         }
 
         // assert other indexes were not announced hits
-        for (auto index = 0; index < TILES_ARR_SIZE; index++)
+        for (auto index = 0; index < TILES_SIZE; index++)
         {
-            tile t = tiles[index];
+            uint8_t t = tiles[index];
             // the revealed_ship_indexes have already been checked for validity
             if (index == revealed_ship_indexes[0] || index == revealed_ship_indexes[1] || index == revealed_ship_indexes[2]) continue;
 

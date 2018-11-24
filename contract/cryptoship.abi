@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Sat Nov 24 18:36:44 2018",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Sat Nov 24 20:51:39 2018",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -8,7 +8,7 @@
             "fields": [
                 {
                     "name": "tiles",
-                    "type": "[25]"
+                    "type": "uint8[]"
                 },
                 {
                     "name": "commitment",
@@ -20,6 +20,20 @@
             "name": "cleanup",
             "base": "",
             "fields": []
+        },
+        {
+            "name": "create",
+            "base": "",
+            "fields": [
+                {
+                    "name": "player",
+                    "type": "name"
+                },
+                {
+                    "name": "quantity",
+                    "type": "asset"
+                }
+            ]
         },
         {
             "name": "game",
@@ -56,16 +70,16 @@
             "base": "",
             "fields": [
                 {
+                    "name": "state",
+                    "type": "uint8"
+                },
+                {
                     "name": "board1",
                     "type": "board"
                 },
                 {
                     "name": "board2",
                     "type": "board"
-                },
-                {
-                    "name": "state",
-                    "type": "state"
                 }
             ]
         },
@@ -107,6 +121,11 @@
         {
             "name": "cleanup",
             "type": "cleanup",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "create",
+            "type": "create",
             "ricardian_contract": ""
         },
         {

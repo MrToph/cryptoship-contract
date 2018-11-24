@@ -12,7 +12,8 @@ void cryptoship::init()
     require_auth(_self);
 }
 
-void cryptoship::create_game(name player, const asset& quantity)
+// create just "opens" the game by allocating and paying for RAM
+void cryptoship::create(name player, const asset quantity)
 {
     require_auth(player);
     // any step between 0.1 and 100 EOS
@@ -31,7 +32,27 @@ void cryptoship::create_game(name player, const asset& quantity)
     });
 }
 
-void cryptoship::join_game(name player, uint64_t game_id, const asset& quantity)
+void cryptoship::create_game_deposit(name player, const asset &quantity)
+{
+    require_auth(player);
+    // this action should be called in a transaction after the "create" action
+    // only then we can guarantee that the last created game is the opened game
+    auto latest_game = games.end();
+    latest_game--;
+
+    eosio_assert(latest_game != games.end(), "must create a game first");
+    eosio_assert(latest_game->player1 == player, "must pay for your own game");
+    eosio_assert(latest_game->bet_amount_per_player == quantity, "game has a different bet amount");
+
+    fsm::automaton machine(latest_game->game_data);
+    machine.create_game_deposit();
+
+    games.modify(latest_game, player, [&](game &g) {
+        g.game_data = machine.data;
+    });
+}
+
+void cryptoship::join_game(name player, uint64_t game_id, const asset &quantity)
 {
     const auto game = games.find(game_id);
     eosio_assert(game != games.end(), "Game not found");
@@ -40,8 +61,8 @@ void cryptoship::join_game(name player, uint64_t game_id, const asset& quantity)
     fsm::automaton machine(game->game_data);
     machine.join_game();
 
-    // make second player pay for the updates
-    games.modify(game, player, [&]( auto& g ) {
+    // cannot make second player pay for updates as this is in a require_recipient call from transfer
+    games.modify(game, game->player1, [&](auto &g) {
         g.player2 = player;
         g.expires_at = time_point_sec(now() + EXPIRE_OPEN);
         g.game_data = machine.data;
@@ -61,24 +82,27 @@ void cryptoship::transfer(name from, name to, asset quantity, string memo)
     eosio_assert(quantity.amount > 0, "only positive quantity allowed");
     eosio_assert(quantity.symbol == EOS_SYMBOL, "only EOS tokens allowed");
 
-    if(memo == "create") {
-        create_game(from, quantity);
+    if (memo == "create")
+    {
+        create_game_deposit(from, quantity);
     }
-    else {
+    else
+    {
         uint64_t game_id = std::stoull(memo);
         join_game(from, game_id, quantity);
     }
 }
 
-void cryptoship::turn(uint64_t game_id, eosio::name player, std::vector<uint8_t> &attack_responses, std::vector<uint8_t> &attacks) {
-
+void cryptoship::turn(uint64_t game_id, eosio::name player, std::vector<uint8_t> &attack_responses, std::vector<uint8_t> &attacks)
+{
 }
 
 void cryptoship::testreset()
 {
     require_auth(_self);
     auto itr = games.begin();
-    while(itr != games.end()) {
+    while (itr != games.end())
+    {
         itr = games.erase(itr);
     }
 }
@@ -94,12 +118,10 @@ extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action)
         switch (action)
         {
             EOSIO_DISPATCH_HELPER(cryptoship,
-                (turn)
-                (init)
-                (cleanup)
-                #ifndef PRODUCTION
-                (testreset)
-                #endif
+                                  (create)(turn)(init)(cleanup)
+#ifndef PRODUCTION
+                                      (testreset)
+#endif
             )
         }
     }

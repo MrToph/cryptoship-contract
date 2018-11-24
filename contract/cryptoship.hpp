@@ -43,7 +43,7 @@ CONTRACT cryptoship : public eosio::contract
         uint64_t by_player2() const { return player2.value; }
         uint64_t by_game_state() const { return game_data.state; }
 
-        EOSLIB_SERIALIZE(game, (id)(player1)(player2)(expires_at)(game_data))
+        EOSLIB_SERIALIZE(game, (id)(player1)(player2)(bet_amount_per_player)(expires_at)(game_data))
     };
 
     typedef eosio::multi_index<
@@ -55,13 +55,14 @@ CONTRACT cryptoship : public eosio::contract
       >
       games_t;
 
-    void create_game(eosio::name player, const eosio::asset& quantity);
+    void create_game_deposit(eosio::name player, const eosio::asset& quantity);
     void join_game(eosio::name player, uint64_t game_id, const eosio::asset& quantity);
 
     #ifndef PRODUCTION
     ACTION testreset();
     #endif
     ACTION init();
+    ACTION create(eosio::name player, const eosio::asset quantity);
     ACTION cleanup();
     ACTION turn(uint64_t game_id, eosio::name player, std::vector<uint8_t> &attack_responses, std::vector<uint8_t> &attacks);
     void transfer(eosio::name from, eosio::name to, eosio::asset quantity, std::string memo);

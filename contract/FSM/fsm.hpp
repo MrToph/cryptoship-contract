@@ -19,25 +19,29 @@ enum state : uint8_t
     P2_REVEALED,
     P2_ATTACKED,
     P2_VERIFIED,
+    
     // game over game states
-    // winning states
     CREATED,
+    DEPOSITED,
+    // winning states
     P1_WIN,
     P2_WIN,
     DRAW,
     // won by opponent taking no action in time
     P1_WIN_EXPIRED,
     P2_WIN_EXPIRED,
+    NEVER_STARTED,
 };
 
 struct game_data
 {
     game_data() : board1(), board2(), state(CREATED) {}
+    // is used as state struct, but cannot be serialized by EOS
+    uint8_t state;
     logic::board board1;
     logic::board board2;
-    state state;
 
-    EOSLIB_SERIALIZE(game_data, (board1)(board2)(state))
+    EOSLIB_SERIALIZE(game_data, (state)(board1)(board2))
 };
 
 class automaton
@@ -49,6 +53,7 @@ class automaton
         : data(gd) {}
 
     void join_game();
+    void create_game_deposit();
 
     game_data data;
 };

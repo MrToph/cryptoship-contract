@@ -1,5 +1,5 @@
 const { api } = require(`../config`)
-const { sendTransaction } = require(`../utils`)
+const { sendTransaction, getErrorDetail } = require(`../utils`)
 
 const { CONTRACT_ACCOUNT } = process.env
 
@@ -24,22 +24,41 @@ describe(`contract`, () => {
         await sendTransaction({ name: `testreset` })
     })
 
+    afterEach(async () => {
+        const game = await getLatestGame()
+        console.log(JSON.stringify(game, null, 2))
+    })
+
     test(`something`, async () => {
-        let result = await sendTransaction({
-            account: `eosio.token`,
-            name: `transfer`,
-            actor: `test1`,
-            data: {
-                from: `test1`,
-                to: CONTRACT_ACCOUNT,
-                quantity: `0.1000 EOS`,
-                memo: `create`,
-            },
-        })
+        let result
+        try {
+            result = await sendTransaction([
+                {
+                    name: `create`,
+                    actor: `test1`,
+                    data: {
+                        player: `test1`,
+                        quantity: `0.1000 EOS`,
+                    },
+                },
+                {
+                    account: `eosio.token`,
+                    name: `transfer`,
+                    actor: `test1`,
+                    data: {
+                        from: `test1`,
+                        to: CONTRACT_ACCOUNT,
+                        quantity: `0.1000 EOS`,
+                        memo: `create`,
+                    },
+                },
+            ])
+        } catch (ex) {
+            console.log(getErrorDetail(ex))
+        }
 
         const game = await getLatestGame()
         expect(game).toBeDefined()
-        console.dir(game)
 
         result = await sendTransaction({
             account: `eosio.token`,
