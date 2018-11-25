@@ -3,16 +3,24 @@
 
 using namespace fsm;
 
-void automaton::join_game()
+
+void automaton::p1_deposit()
 {
-    eosio_assert(data.state == DEPOSITED, "game has already started");
-    data.state = P2_REVEALED;
+    eosio_assert(data.state == CREATED, "player1 funds already deposited");
+    data.state = P1_DEPOSITED;
 }
 
-void automaton::create_game_deposit()
+void automaton::p2_deposit()
 {
-    eosio_assert(data.state == CREATED, "game has already started");
-    data.state = DEPOSITED;
+    eosio_assert(data.state == P1_DEPOSITED, "player2 cannot deposit now");
+    data.state = ALL_DEPOSITED;
+}
+
+void automaton::join(const eosio::checksum256& commitment)
+{
+    eosio_assert(data.state == ALL_DEPOSITED, "player2 needs to deposit first or game already started");
+    data.board2.commitment = commitment;
+    data.state = P2_REVEALED;
 }
 
 void automaton::reveal(bool is_player1, const std::vector<uint8_t> &attack_responses) {

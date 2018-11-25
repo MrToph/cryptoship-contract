@@ -71,14 +71,15 @@ public:
   ACTION testreset();
 #endif
   ACTION init();
-  ACTION create(eosio::name player, const eosio::asset quantity);
+  ACTION create(eosio::name player, const eosio::asset quantity, const eosio::checksum256& commitment);
+  ACTION join(eosio::name player, uint64_t game_id, const eosio::checksum256& commitment);
   ACTION cleanup();
   ACTION reveal(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attack_responses);
   ACTION attack(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attacks);
 
   void transfer(eosio::name from, eosio::name to, const eosio::asset &quantity, std::string memo);
-  void create_game_deposit(eosio::name player, const eosio::asset &quantity);
-  void join_game(eosio::name player, uint64_t game_id, const eosio::asset &quantity);
+  void p1_deposit(eosio::name player, const eosio::asset &quantity);
+  void p2_deposit(eosio::name player, uint64_t game_id, const eosio::asset &quantity);
 
   games_t games;
 };

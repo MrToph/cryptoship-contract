@@ -1,10 +1,19 @@
 const { api } = require(`../config`)
 const { sendTransaction, getErrorDetail } = require(`../utils`)
+const { createSeed, createCommitment } = require(`./utils`)
 
 const { CONTRACT_ACCOUNT } = process.env
 
 // running three actions sometimes goes beyond default 5s timeout
 jest.setTimeout(20000)
+
+const p1ShipIndexes = [2, 3, 4]
+const p1Seed = createSeed(p1ShipIndexes)
+const p1Commitment = createCommitment(p1Seed)
+
+const p2ShipIndexes = [21, 20, 19]
+const p2Seed = createSeed(p2ShipIndexes)
+const p2Commitment = createCommitment(p2Seed)
 
 const getLatestGame = async () =>
     api.rpc
@@ -43,6 +52,7 @@ describe(`contract`, () => {
                     data: {
                         player: `test1`,
                         quantity: `0.1000 EOS`,
+                        commitment: p1Commitment,
                     },
                 },
                 {
@@ -57,8 +67,6 @@ describe(`contract`, () => {
                     },
                 },
             ])
-
-            // round 1
             result = await sendTransaction([
                 {
                     account: `eosio.token`,
@@ -71,6 +79,19 @@ describe(`contract`, () => {
                         memo: `${gameId}`,
                     },
                 },
+                {
+                    name: `join`,
+                    actor: `test2`,
+                    data: {
+                        player: `test2`,
+                        game_id: gameId,
+                        commitment: p2Commitment,
+                    },
+                },
+            ])
+
+            // round 1
+            result = await sendTransaction([
                 {
                     name: `attack`,
                     actor: `test2`,
@@ -152,7 +173,7 @@ describe(`contract`, () => {
                     data: {
                         player: `test2`,
                         game_id: gameId,
-                        attack_responses: [2],
+                        attack_responses: [4],
                     },
                 },
             ])

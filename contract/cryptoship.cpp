@@ -13,14 +13,14 @@ void cryptoship::init()
 }
 
 // create just "opens" the game by allocating and paying for RAM
-void cryptoship::create(name player, const asset quantity)
+void cryptoship::create(name player, const asset quantity, const eosio::checksum256& commitment)
 {
     require_auth(player);
     // any step between 0.1 and 100 EOS
     eosio_assert(quantity.amount == 1E3 || quantity.amount == 1E4 || quantity.amount == 1E5 || quantity.amount == 1E6, "Must pay any of 0.1 / 1.0 / 10.0 / 100.0 EOS");
 
     // default constructor initializes game data correctly
-    fsm::automaton machine;
+    fsm::automaton machine(commitment);
     // make player pay for RAM
     games.emplace(player, [&](game &g) {
         // auto-increment key
@@ -32,7 +32,22 @@ void cryptoship::create(name player, const asset quantity)
     });
 }
 
-void cryptoship::create_game_deposit(name player, const asset &quantity)
+void cryptoship::join(eosio::name player, uint64_t game_id, const eosio::checksum256& commitment) {
+    require_auth(player);
+
+    auto game_itr = get_game(game_id);
+    assert_player_in_game(*game_itr, player);
+
+    fsm::automaton machine(game_itr->game_data);
+    machine.join(commitment);
+
+    games.modify(game_itr, game_itr->player1, [&](auto &g) {
+        g.expires_at = time_point_sec(now() + EXPIRE_TURN);
+        g.game_data = machine.data;
+    });
+}
+
+void cryptoship::p1_deposit(name player, const asset &quantity)
 {
     require_auth(player);
     // this action should be called in a transaction after the "create" action
@@ -45,7 +60,7 @@ void cryptoship::create_game_deposit(name player, const asset &quantity)
     eosio_assert(latest_game->bet_amount_per_player == quantity, "game has a different bet amount");
 
     fsm::automaton machine(latest_game->game_data);
-    machine.create_game_deposit();
+    machine.p1_deposit();
 
     games.modify(latest_game, player, [&](game &g) {
         g.expires_at = time_point_sec(now() + EXPIRE_TURN);
@@ -53,7 +68,7 @@ void cryptoship::create_game_deposit(name player, const asset &quantity)
     });
 }
 
-void cryptoship::join_game(name player, uint64_t game_id, const asset &quantity)
+void cryptoship::p2_deposit(name player, uint64_t game_id, const asset &quantity)
 {
     require_auth(player);
 
@@ -62,7 +77,7 @@ void cryptoship::join_game(name player, uint64_t game_id, const asset &quantity)
     eosio_assert(game->bet_amount_per_player == quantity, "game has a different bet amount");
 
     fsm::automaton machine(game->game_data);
-    machine.join_game();
+    machine.p2_deposit();
 
     // cannot make second player pay for updates as this is in a require_recipient call from transfer
     games.modify(game, game->player1, [&](auto &g) {
@@ -87,12 +102,12 @@ void cryptoship::transfer(name from, name to, const asset& quantity, string memo
 
     if (memo == "create")
     {
-        create_game_deposit(from, quantity);
+        p1_deposit(from, quantity);
     }
     else
     {
         uint64_t game_id = std::stoull(memo);
-        join_game(from, game_id, quantity);
+        p2_deposit(from, game_id, quantity);
     }
 }
 
@@ -147,7 +162,7 @@ extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action)
         switch (action)
         {
             EOSIO_DISPATCH_HELPER(cryptoship,
-                                  (create)(reveal)(attack)(init)(cleanup)
+                                  (create)(join)(reveal)(attack)(init)(cleanup)
 #ifndef PRODUCTION
                                       (testreset)
 #endif
