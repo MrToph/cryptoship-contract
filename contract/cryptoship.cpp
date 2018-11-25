@@ -48,12 +48,15 @@ void cryptoship::create_game_deposit(name player, const asset &quantity)
     machine.create_game_deposit();
 
     games.modify(latest_game, player, [&](game &g) {
+        g.expires_at = time_point_sec(now() + EXPIRE_TURN);
         g.game_data = machine.data;
     });
 }
 
 void cryptoship::join_game(name player, uint64_t game_id, const asset &quantity)
 {
+    require_auth(player);
+
     const auto game = games.find(game_id);
     eosio_assert(game != games.end(), "Game not found");
     eosio_assert(game->bet_amount_per_player == quantity, "game has a different bet amount");
@@ -69,7 +72,7 @@ void cryptoship::join_game(name player, uint64_t game_id, const asset &quantity)
     });
 }
 
-void cryptoship::transfer(name from, name to, asset quantity, string memo)
+void cryptoship::transfer(name from, name to, const asset& quantity, string memo)
 {
     if (from == _self)
     {
@@ -93,8 +96,24 @@ void cryptoship::transfer(name from, name to, asset quantity, string memo)
     }
 }
 
-void cryptoship::turn(uint64_t game_id, eosio::name player, std::vector<uint8_t> &attack_responses, std::vector<uint8_t> &attacks)
+void cryptoship::reveal(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attack_responses)
+{ 
+    require_auth(player);
+    auto game_itr = get_game(game_id);
+    assert_player_in_game(*game_itr, player);
+
+    fsm::automaton machine(game_itr->game_data);
+    machine.reveal(player == game_itr->player1, attack_responses);
+
+    games.modify(game_itr, game_itr->player1, [&](auto &g) {
+        g.expires_at = time_point_sec(now() + EXPIRE_TURN);
+        g.game_data = machine.data;
+    });
+}
+
+void cryptoship::attack(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attacks)
 {
+
 }
 
 void cryptoship::testreset()
@@ -118,7 +137,7 @@ extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action)
         switch (action)
         {
             EOSIO_DISPATCH_HELPER(cryptoship,
-                                  (create)(turn)(init)(cleanup)
+                                  (create)(reveal)(attack)(init)(cleanup)
 #ifndef PRODUCTION
                                       (testreset)
 #endif

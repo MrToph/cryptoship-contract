@@ -32,11 +32,14 @@ struct board
     std::vector<uint8_t> tiles;
     eosio::checksum256 commitment;
 
-    board() : board(eosio::checksum256()) {
+    board() : board(eosio::checksum256())
+    {
     }
 
-    board(eosio::checksum256 commitment) : commitment(commitment) {
-        for(int i = 0; i < TILES_SIZE; i++) {
+    board(eosio::checksum256 commitment) : commitment(commitment)
+    {
+        for (int i = 0; i < TILES_SIZE; i++)
+        {
             tiles.emplace_back(UNKNWON);
         }
     }
@@ -46,7 +49,8 @@ struct board
         return (tile)tiles[row * BOARD_WIDTH + column];
     }
 
-    uint8_t get_max_shots_amount() const {
+    uint8_t get_max_shots_amount() const
+    {
         uint8_t shots = 0;
         for (const std::pair<tile, uint8_t> &pair : ship_shots_map)
         {
@@ -59,7 +63,7 @@ struct board
     uint8_t get_shots_amount()
     {
         uint8_t shots = get_max_shots_amount();
-        
+
         for (uint8_t t : tiles)
         {
             if (t == ATTACK_SHIP1 || t == ATTACK_SHIP2 || t == ATTACK_SHIP3)
@@ -70,10 +74,44 @@ struct board
         return shots;
     }
 
+    void reveal(const std::vector<uint8_t> &attack_responses)
+    {
+        int unrevealed_tiles_amount = 0;
+        int i = 0;
+
+        for_each(tiles.begin(), tiles.end(), [&](uint8_t &tile) {
+            if (tile == ATTACK_UNREVEALED)
+            {
+                unrevealed_tiles_amount++;
+                if (i < attack_responses.size())
+                    tile = attack_responses[i++];
+            }
+        });
+
+        eosio_assert(attack_responses.size() == unrevealed_tiles_amount, "you must reveal all unrevealed tiles");
+    }
+
+    // void attack(const std::vector<uint8_t> &attack_responses)
+    // {
+    //     int unrevealed_tiles_amount = 0;
+    //     int i = 0;
+
+    //     for_each(tiles.begin(), tiles.end(), [&](uint8_t &tile) {
+    //         if (tile == ATTACK_UNREVEALED)
+    //         {
+    //             unrevealed_tiles_amount++;
+    //             if (i < attack_responses.size())
+    //                 tile = attack_responses[i++];
+    //         }
+    //     });
+
+    //     eosio_assert(attack_responses.size() == unrevealed_tiles_amount, "you must reveal all unrevealed tiles");
+    // }
+
     // this function gets called when the game is over and verifies that the player
     // 1) announced the attack responses correctly
     // 2) placed the correct amount of ships
-    bool reveal_and_verify(const uint8_t revealed_ship_indexes[3])
+    bool decommit_and_verify(const uint8_t revealed_ship_indexes[3])
     {
         // assert SHA256(revealed_ships) == commitment
 
@@ -93,9 +131,10 @@ struct board
         {
             uint8_t t = tiles[index];
             // the revealed_ship_indexes have already been checked for validity
-            if (index == revealed_ship_indexes[0] || index == revealed_ship_indexes[1] || index == revealed_ship_indexes[2]) continue;
+            if (index == revealed_ship_indexes[0] || index == revealed_ship_indexes[1] || index == revealed_ship_indexes[2])
+                continue;
 
-            // every other tile must now be either unknown, unrevealed, or announced as a miss 
+            // every other tile must now be either unknown, unrevealed, or announced as a miss
             if (!(t == UNKNWON || t == ATTACK_UNREVEALED || t == ATTACK_MISS))
             {
                 return false;

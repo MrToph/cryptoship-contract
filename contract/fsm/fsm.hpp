@@ -54,6 +54,8 @@ class automaton
 
     void join_game();
     void create_game_deposit();
+    void reveal(bool is_player1, const std::vector<uint8_t> &attack_responses);
+    void attack(bool is_player1, const std::vector<uint8_t> &attacks);
 
     game_data data;
 };
