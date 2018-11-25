@@ -25,6 +25,23 @@ static const std::map<tile, uint8_t> ship_attacks_map = {
     {ATTACK_SHIP2, 1},
     {ATTACK_SHIP3, 1}};
 
+static const void assert_no_duplicate_ships(const std::vector<uint8_t> &v)
+{
+    // create a copy of vector and sort it
+    std::vector<uint8_t> sorted = v;
+    std::sort(sorted.begin(), sorted.end());
+
+    // skip all tiles less than ships
+    auto it = sorted.begin();
+    while(*it < ATTACK_SHIP1 && it != sorted.end()) it++;
+
+    // consecutive elements must now be different
+    while(it != sorted.end() && (it + 1) != sorted.end()) {
+        eosio_assert(*it != *(it+1), "duplicate ships");
+        it++;
+    }
+}
+
 // a board stores (hidden) board information for a single player,
 // i.e., the opposing player's attacks and their announced results
 struct board
@@ -61,7 +78,7 @@ struct board
     }
 
     // calculates max attacks for the player by subtracting destroyed ships' attacks
-    uint8_t get_attacks_amount()
+    uint8_t get_attacks_amount() const
     {
         uint8_t attacks = get_max_attacks_amount();
 
@@ -74,7 +91,8 @@ struct board
         return attacks;
     }
 
-    bool has_ships() {
+    bool has_ships() const
+    {
         return get_attacks_amount() > 0;
     }
 
@@ -86,6 +104,7 @@ struct board
             eosio_assert(r == ATTACK_MISS || r == ATTACK_SHIP1 || r == ATTACK_SHIP2 || r == ATTACK_SHIP3,
                          "invalid attack response. must be 'miss' or a ship type");
         });
+        logic::assert_no_duplicate_ships(attack_responses);
 
         int i = 0;
         std::for_each(tiles.begin(), tiles.end(), [&](uint8_t &tile) {
@@ -99,9 +118,9 @@ struct board
         eosio_assert(i == attack_responses.size(), "tried to reveal more attacks than existant");
     }
 
-    void attack(const std::vector<uint8_t> &attacks)
+    void attack(const std::vector<uint8_t> &attacks, const board& attacker_board)
     {
-        int attacks_amount = get_attacks_amount();
+        int attacks_amount = attacker_board.get_attacks_amount();
         int unknown_tiles_amount = std::count_if(tiles.begin(), tiles.end(), [&](const uint8_t &tile) {
             return tile == UNKNWON;
         });
@@ -119,7 +138,7 @@ struct board
     // this function gets called when the game is over and verifies that the player
     // 1) announced the attack responses correctly
     // 2) placed the correct amount of ships
-    bool decommit_and_verify(const uint8_t revealed_ship_indexes[3])
+    bool decommit_and_verify(const uint8_t revealed_ship_indexes[3]) const
     {
         // assert SHA256(revealed_ships) == commitment
 

@@ -39,5 +39,7 @@ void automaton::attack(bool is_player1, const std::vector<uint8_t> &attacks) {
     }
 
     // player1 attacks are marked on board2 and vice versa
-    (is_player1 ? data.board2 : data.board1).attack(attacks);
+    const auto &attacker_board = is_player1 ? data.board1 : data.board2;
+    auto &attackee_board = is_player1 ? data.board2 : data.board1;
+    attackee_board.attack(attacks, attacker_board);
 }
