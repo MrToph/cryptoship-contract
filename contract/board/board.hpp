@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <algorithm> // std::min
 
 #include <eosiolib/eosio.hpp>
 #include <eosiolib/asset.hpp>
@@ -19,7 +20,7 @@ enum tile : uint8_t
     ATTACK_SHIP2,
     ATTACK_SHIP3
 };
-static const std::map<tile, uint8_t> ship_shots_map = {
+static const std::map<tile, uint8_t> ship_attacks_map = {
     {ATTACK_SHIP1, 2},
     {ATTACK_SHIP2, 1},
     {ATTACK_SHIP3, 1}};
@@ -49,64 +50,71 @@ struct board
         return (tile)tiles[row * BOARD_WIDTH + column];
     }
 
-    uint8_t get_max_shots_amount() const
+    uint8_t get_max_attacks_amount() const
     {
-        uint8_t shots = 0;
-        for (const std::pair<tile, uint8_t> &pair : ship_shots_map)
+        uint8_t attacks = 0;
+        for (const std::pair<tile, uint8_t> &pair : ship_attacks_map)
         {
-            shots += pair.second;
+            attacks += pair.second;
         }
-        return shots;
+        return attacks;
     }
 
-    // calculates max shots for the player by subtracting destroyed ships' shots
-    uint8_t get_shots_amount()
+    // calculates max attacks for the player by subtracting destroyed ships' attacks
+    uint8_t get_attacks_amount()
     {
-        uint8_t shots = get_max_shots_amount();
+        uint8_t attacks = get_max_attacks_amount();
 
-        for (uint8_t t : tiles)
-        {
+        std::for_each(tiles.begin(), tiles.end(), [&](const uint8_t &t) {
             if (t == ATTACK_SHIP1 || t == ATTACK_SHIP2 || t == ATTACK_SHIP3)
             {
-                shots -= ship_shots_map.at((tile)t);
+                attacks -= ship_attacks_map.at((tile)t);
             }
-        }
-        return shots;
+        });
+        return attacks;
     }
 
+    bool has_ships() {
+        return get_attacks_amount() > 0;
+    }
+
+    // attack_responses is an array of integers in range 0,1,2,3
+    // each representing miss or the type of the hit ship
     void reveal(const std::vector<uint8_t> &attack_responses)
     {
-        int unrevealed_tiles_amount = 0;
-        int i = 0;
+        std::for_each(attack_responses.begin(), attack_responses.end(), [&](uint8_t r) {
+            eosio_assert(r == ATTACK_MISS || r == ATTACK_SHIP1 || r == ATTACK_SHIP2 || r == ATTACK_SHIP3,
+                         "invalid attack response. must be 'miss' or a ship type");
+        });
 
-        for_each(tiles.begin(), tiles.end(), [&](uint8_t &tile) {
+        int i = 0;
+        std::for_each(tiles.begin(), tiles.end(), [&](uint8_t &tile) {
             if (tile == ATTACK_UNREVEALED)
             {
-                unrevealed_tiles_amount++;
-                if (i < attack_responses.size())
-                    tile = attack_responses[i++];
+                eosio_assert(i < attack_responses.size(), "must reveal all unrevealed attacks");
+                tile = attack_responses[i++];
             }
         });
 
-        eosio_assert(attack_responses.size() == unrevealed_tiles_amount, "you must reveal all unrevealed tiles");
+        eosio_assert(i == attack_responses.size(), "tried to reveal more attacks than existant");
     }
 
-    // void attack(const std::vector<uint8_t> &attack_responses)
-    // {
-    //     int unrevealed_tiles_amount = 0;
-    //     int i = 0;
+    void attack(const std::vector<uint8_t> &attacks)
+    {
+        int attacks_amount = get_attacks_amount();
+        int unknown_tiles_amount = std::count_if(tiles.begin(), tiles.end(), [&](const uint8_t &tile) {
+            return tile == UNKNWON;
+        });
+        int expected_attacks = std::min(attacks_amount, unknown_tiles_amount);
 
-    //     for_each(tiles.begin(), tiles.end(), [&](uint8_t &tile) {
-    //         if (tile == ATTACK_UNREVEALED)
-    //         {
-    //             unrevealed_tiles_amount++;
-    //             if (i < attack_responses.size())
-    //                 tile = attack_responses[i++];
-    //         }
-    //     });
+        // always do max attacks, except if there are not enough tiles to attack left
+        eosio_assert(attacks.size() == expected_attacks, "incorrect amount of attacks");
 
-    //     eosio_assert(attack_responses.size() == unrevealed_tiles_amount, "you must reveal all unrevealed tiles");
-    // }
+        std::for_each(attacks.begin(), attacks.end(), [&](uint8_t tile_index) {
+            eosio_assert(tiles[tile_index] == UNKNWON, "tile already attacked");
+            tiles[tile_index] = ATTACK_UNREVEALED;
+        });
+    }
 
     // this function gets called when the game is over and verifies that the player
     // 1) announced the attack responses correctly

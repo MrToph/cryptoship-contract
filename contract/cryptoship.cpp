@@ -113,7 +113,17 @@ void cryptoship::reveal(uint64_t game_id, eosio::name player, const std::vector<
 
 void cryptoship::attack(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attacks)
 {
+    require_auth(player);
+    auto game_itr = get_game(game_id);
+    assert_player_in_game(*game_itr, player);
 
+    fsm::automaton machine(game_itr->game_data);
+    machine.attack(player == game_itr->player1, attacks);
+
+    games.modify(game_itr, game_itr->player1, [&](auto &g) {
+        g.expires_at = time_point_sec(now() + EXPIRE_TURN);
+        g.game_data = machine.data;
+    });
 }
 
 void cryptoship::testreset()
