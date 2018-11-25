@@ -33,11 +33,13 @@ static const void assert_no_duplicate_ships(const std::vector<uint8_t> &v)
 
     // skip all tiles less than ships
     auto it = sorted.begin();
-    while(*it < ATTACK_SHIP1 && it != sorted.end()) it++;
+    while (*it < ATTACK_SHIP1 && it != sorted.end())
+        it++;
 
     // consecutive elements must now be different
-    while(it != sorted.end() && (it + 1) != sorted.end()) {
-        eosio_assert(*it != *(it+1), "duplicate ships");
+    while (it != sorted.end() && (it + 1) != sorted.end())
+    {
+        eosio_assert(*it != *(it + 1), "duplicate ships");
         it++;
     }
 }
@@ -118,7 +120,7 @@ struct board
         eosio_assert(i == attack_responses.size(), "tried to reveal more attacks than existant");
     }
 
-    void attack(const std::vector<uint8_t> &attacks, const board& attacker_board)
+    void attack(const std::vector<uint8_t> &attacks, const board &attacker_board)
     {
         int attacks_amount = attacker_board.get_attacks_amount();
         int unknown_tiles_amount = std::count_if(tiles.begin(), tiles.end(), [&](const uint8_t &tile) {
@@ -136,11 +138,13 @@ struct board
     }
 
     // this function gets called when the game is over and verifies that the player
-    // 1) announced the attack responses correctly
-    // 2) placed the correct amount of ships
-    bool decommit_and_verify(const uint8_t revealed_ship_indexes[3]) const
+    // 1) provides a valid decommitment such that SHA256(decommitment) = commitment
+    // 2) announced the attack responses correctly
+    bool decommit(const eosio::checksum256 &decommitment) const
     {
-        // assert SHA256(revealed_ships) == commitment
+        const auto d_bytes = decommitment.extract_as_byte_array();
+        assert_sha256((const char*)d_bytes.data(), d_bytes.size(), commitment);
+        uint8_t revealed_ship_indexes[] = {d_bytes[0], d_bytes[1], d_bytes[2]};
 
         // check revealed_ship_indexes for validity
         for (int i = 0; i < 3; i++)
@@ -153,7 +157,7 @@ struct board
                 return false;
         }
 
-        // assert other indexes were not announced hits
+        // assert other indexes were not announced as hits
         for (auto index = 0; index < TILES_SIZE; index++)
         {
             uint8_t t = tiles[index];

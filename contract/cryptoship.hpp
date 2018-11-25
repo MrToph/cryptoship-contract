@@ -74,8 +74,9 @@ public:
   ACTION create(eosio::name player, const eosio::asset quantity, const eosio::checksum256& commitment);
   ACTION join(eosio::name player, uint64_t game_id, const eosio::checksum256& commitment);
   ACTION cleanup();
-  ACTION reveal(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attack_responses);
   ACTION attack(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attacks);
+  ACTION reveal(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attack_responses);
+  ACTION decommit(uint64_t game_id, eosio::name player, const eosio::checksum256& decommitment);
 
   void transfer(eosio::name from, eosio::name to, const eosio::asset &quantity, std::string memo);
   void p1_deposit(eosio::name player, const eosio::asset &quantity);

@@ -13,7 +13,7 @@ void cryptoship::init()
 }
 
 // create just "opens" the game by allocating and paying for RAM
-void cryptoship::create(name player, const asset quantity, const eosio::checksum256& commitment)
+void cryptoship::create(name player, const asset quantity, const eosio::checksum256 &commitment)
 {
     require_auth(player);
     // any step between 0.1 and 100 EOS
@@ -32,11 +32,12 @@ void cryptoship::create(name player, const asset quantity, const eosio::checksum
     });
 }
 
-void cryptoship::join(eosio::name player, uint64_t game_id, const eosio::checksum256& commitment) {
+void cryptoship::join(eosio::name player, uint64_t game_id, const eosio::checksum256 &commitment)
+{
     require_auth(player);
 
     auto game_itr = get_game(game_id);
-    assert_player_in_game(*game_itr, player);
+    eosio_assert(game_itr->player2 == player, "deposit of another player already exists");
 
     fsm::automaton machine(game_itr->game_data);
     machine.join(commitment);
@@ -87,7 +88,7 @@ void cryptoship::p2_deposit(name player, uint64_t game_id, const asset &quantity
     });
 }
 
-void cryptoship::transfer(name from, name to, const asset& quantity, string memo)
+void cryptoship::transfer(name from, name to, const asset &quantity, string memo)
 {
     if (from == _self)
     {
@@ -111,21 +112,6 @@ void cryptoship::transfer(name from, name to, const asset& quantity, string memo
     }
 }
 
-void cryptoship::reveal(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attack_responses)
-{ 
-    require_auth(player);
-    auto game_itr = get_game(game_id);
-    assert_player_in_game(*game_itr, player);
-
-    fsm::automaton machine(game_itr->game_data);
-    machine.reveal(player == game_itr->player1, attack_responses);
-
-    games.modify(game_itr, game_itr->player1, [&](auto &g) {
-        g.expires_at = time_point_sec(now() + EXPIRE_TURN);
-        g.game_data = machine.data;
-    });
-}
-
 void cryptoship::attack(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attacks)
 {
     require_auth(player);
@@ -139,6 +125,81 @@ void cryptoship::attack(uint64_t game_id, eosio::name player, const std::vector<
         g.expires_at = time_point_sec(now() + EXPIRE_TURN);
         g.game_data = machine.data;
     });
+}
+
+void cryptoship::reveal(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attack_responses)
+{
+    require_auth(player);
+    auto game_itr = get_game(game_id);
+    assert_player_in_game(*game_itr, player);
+
+    fsm::automaton machine(game_itr->game_data);
+    machine.reveal(player == game_itr->player1, attack_responses);
+
+    games.modify(game_itr, game_itr->player1, [&](auto &g) {
+        g.expires_at = time_point_sec(now() + EXPIRE_TURN);
+        g.game_data = machine.data;
+    });
+}
+
+void cryptoship::decommit(uint64_t game_id, eosio::name player, const eosio::checksum256 &decommitment)
+{
+    require_auth(player);
+    auto game_itr = get_game(game_id);
+    assert_player_in_game(*game_itr, player);
+
+    bool is_player1 = player == game_itr->player1;
+    fsm::automaton machine(game_itr->game_data);
+    machine.decommit(is_player1, decommitment);
+
+    games.modify(game_itr, game_itr->player1, [&](auto &g) {
+        // player1 decommits means that the game is over and a winner was determined
+        g.expires_at = time_point_sec(now() + (is_player1 ? EXPIRE_GAME_OVER : EXPIRE_TURN));
+        g.game_data = machine.data;
+    });
+
+    // player1 decommits means that the game is over and a winner was determined
+    if (is_player1)
+    {
+        switch (machine.get_state())
+        {
+        case P1_WIN:
+        {
+            action(permission_level{_self, "active"_n},
+                   "eosio.token"_n,
+                   "transfer"_n,
+                   make_tuple(_self, game_itr->player1, game_itr->bet_amount_per_player * 2, std::string("You win!")))
+                .send();
+            break;
+        }
+        case P2_WIN:
+        {
+            action(permission_level{_self, "active"_n},
+                   "eosio.token"_n,
+                   "transfer"_n,
+                   make_tuple(_self, game_itr->player2, game_itr->bet_amount_per_player * 2, std::string("You win!")))
+                .send();
+            break;
+        }
+        case DRAW:
+        {
+            action(permission_level{_self, "active"_n},
+                   "eosio.token"_n,
+                   "transfer"_n,
+                   make_tuple(_self, game_itr->player1, game_itr->bet_amount_per_player, std::string("Draw!")))
+                .send();
+            action(permission_level{_self, "active"_n},
+                   "eosio.token"_n,
+                   "transfer"_n,
+                   make_tuple(_self, game_itr->player2, game_itr->bet_amount_per_player, std::string("Draw!")))
+                .send();
+            break;
+        }
+        default: {
+            eosio_assert(false, "FSM is in a broken state");
+        }
+        }
+    }
 }
 
 void cryptoship::testreset()
@@ -162,7 +223,7 @@ extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action)
         switch (action)
         {
             EOSIO_DISPATCH_HELPER(cryptoship,
-                                  (create)(join)(reveal)(attack)(init)(cleanup)
+                                  (create)(join)(attack)(reveal)(decommit)(init)(cleanup)
 #ifndef PRODUCTION
                                       (testreset)
 #endif

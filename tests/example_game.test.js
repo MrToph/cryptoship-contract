@@ -7,13 +7,10 @@ const { CONTRACT_ACCOUNT } = process.env
 // running three actions sometimes goes beyond default 5s timeout
 jest.setTimeout(20000)
 
-const p1ShipIndexes = [2, 3, 4]
-const p1Seed = createSeed(p1ShipIndexes)
-const p1Commitment = createCommitment(p1Seed)
-
-const p2ShipIndexes = [21, 20, 19]
-const p2Seed = createSeed(p2ShipIndexes)
-const p2Commitment = createCommitment(p2Seed)
+const getPrintOutput = transaction =>
+    transaction.processed.action_traces
+        .map(trace => `${trace.console}${trace.inline_traces.map(t => `\n\t${t.console}`)}`)
+        .join(`\n`)
 
 const getLatestGame = async () =>
     api.rpc
@@ -29,6 +26,14 @@ const getLatestGame = async () =>
         .then(result => result.rows.pop())
 
 describe(`contract`, () => {
+    const p1ShipIndexes = [2, 3, 4]
+    const p1Seed = createSeed(p1ShipIndexes)
+    const p1Commitment = createCommitment(p1Seed)
+
+    const p2ShipIndexes = [21, 20, 19]
+    const p2Seed = createSeed(p2ShipIndexes)
+    const p2Commitment = createCommitment(p2Seed)
+
     beforeEach(async () => {
         await sendTransaction({ name: `testreset` })
     })
@@ -176,8 +181,30 @@ describe(`contract`, () => {
                         attack_responses: [4],
                     },
                 },
+                {
+                    name: `decommit`,
+                    actor: `test2`,
+                    data: {
+                        player: `test2`,
+                        game_id: gameId,
+                        decommitment: p2Seed,
+                    },
+                },
             ])
-            expect(true).toBe(true)
+            result = await sendTransaction({
+                name: `decommit`,
+                actor: `test1`,
+                data: {
+                    player: `test1`,
+                    game_id: gameId,
+                    decommitment: p1Seed,
+                },
+            })
+
+            // console.log(getPrintOutput(result))
+            const game = await getLatestGame()
+            // P2 should have won, i.e. state 9
+            expect(game.game_data.state).toBe(9)
         } catch (ex) {
             console.log(getErrorDetail(ex))
         }

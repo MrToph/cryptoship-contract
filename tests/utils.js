@@ -12,16 +12,15 @@ function decimalToHex(d, padding = 2) {
 
 function createSeed(shipIndexes) {
     const shipIndexesHex = shipIndexes.map(v => decimalToHex(v)).join(``)
-    console.log(shipIndexesHex)
     // pad it with random bytes so it fits into 256 bit checksum type
     const randomBytes = crypto.randomBytes(32 - shipIndexesHex.length / 2)
     return `${shipIndexesHex}${randomBytes.toString(`hex`)}`
 }
 
-function createCommitment(seed) {
+function createCommitment(seedAsHex) {
     // sha256 hash p1's message and save it in commitment
     const hash = crypto.createHash(`sha256`)
-    hash.update(seed)
+    hash.update(Buffer.from(seedAsHex, `hex`))
     const commitment = hash.digest(`hex`)
     return commitment
 }
