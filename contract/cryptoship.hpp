@@ -18,8 +18,8 @@
 static const uint32_t EXPIRE_OPEN = 60 * 60 * 24 * 7;
 // 1 day
 static const uint32_t EXPIRE_TURN = 60 * 60 * 24 * 1;
-// 3 days
-static const uint32_t EXPIRE_GAME_OVER = 60 * 60 * 24 * 3;
+// 2 days
+static const uint32_t EXPIRE_GAME_OVER = 60 * 60 * 24 * 2;
 
 CONTRACT cryptoship : public eosio::contract
 {
@@ -71,9 +71,10 @@ public:
   ACTION testreset();
 #endif
   ACTION init();
+  // implemented in cleanup.cpp
+  ACTION cleanup();
   ACTION create(eosio::name player, const eosio::asset quantity, const eosio::checksum256& commitment);
   ACTION join(eosio::name player, uint64_t game_id, const eosio::checksum256& commitment);
-  ACTION cleanup();
   ACTION attack(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attacks);
   ACTION reveal(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attack_responses);
   ACTION decommit(uint64_t game_id, eosio::name player, const eosio::checksum256& decommitment);

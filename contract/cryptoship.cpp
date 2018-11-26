@@ -3,6 +3,7 @@
 // https://eosio.stackexchange.com/a/1349/118
 #include "./cleanup/cleanup.cpp"
 #include "./fsm/fsm.cpp"
+#include "./utils/utils.cpp"
 
 using namespace eosio;
 using namespace std;
@@ -161,14 +162,18 @@ void cryptoship::decommit(uint64_t game_id, eosio::name player, const eosio::che
     // player1 decommits means that the game is over and a winner was determined
     if (is_player1)
     {
-        switch (machine.get_state())
+        switch (machine.get_winner())
         {
         case P1_WIN:
         {
             action(permission_level{_self, "active"_n},
                    "eosio.token"_n,
                    "transfer"_n,
-                   make_tuple(_self, game_itr->player1, game_itr->bet_amount_per_player * 2, std::string("You win!")))
+                   make_tuple(
+                       _self,
+                       game_itr->player1,
+                       game_itr->bet_amount_per_player * 2,
+                       std::to_string(game_itr->id)))
                 .send();
             break;
         }
@@ -177,25 +182,29 @@ void cryptoship::decommit(uint64_t game_id, eosio::name player, const eosio::che
             action(permission_level{_self, "active"_n},
                    "eosio.token"_n,
                    "transfer"_n,
-                   make_tuple(_self, game_itr->player2, game_itr->bet_amount_per_player * 2, std::string("You win!")))
+                   make_tuple(
+                       _self,
+                       game_itr->player2,
+                       game_itr->bet_amount_per_player * 2,
+                       std::to_string(game_itr->id)))
                 .send();
             break;
         }
         case DRAW:
         {
-            action(permission_level{_self, "active"_n},
-                   "eosio.token"_n,
-                   "transfer"_n,
-                   make_tuple(_self, game_itr->player1, game_itr->bet_amount_per_player, std::string("Draw!")))
-                .send();
-            action(permission_level{_self, "active"_n},
-                   "eosio.token"_n,
-                   "transfer"_n,
-                   make_tuple(_self, game_itr->player2, game_itr->bet_amount_per_player, std::string("Draw!")))
-                .send();
+            // send deferred because P2 has incentive to block transfers
+            send_amount_deferred(
+                _self, game_itr->id,
+                game_itr->player1,
+                game_itr->bet_amount_per_player);
+            send_amount_deferred(
+                _self, game_itr->id,
+                game_itr->player2,
+                game_itr->bet_amount_per_player);
             break;
         }
-        default: {
+        default:
+        {
             eosio_assert(false, "FSM is in a broken state");
         }
         }

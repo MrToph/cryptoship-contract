@@ -3,6 +3,50 @@
 
 using namespace fsm;
 
+void automaton::expire_game(bool* p1_won, uint32_t* multiplier) {
+    switch(data.state) {
+            // no money was deposited
+            case CREATED: {
+                data.state = NEVER_STARTED;
+                *multiplier = 0;
+                break;
+            }
+
+            // only P1 deposited and no P2 joined, full return
+            case P1_DEPOSITED: {
+                data.state = NEVER_STARTED;
+                *p1_won = true;
+                *multiplier = 1;
+                break;
+            }
+
+            // all states where it's P2's turn
+            case ALL_DEPOSITED:
+            case P2_REVEALED:
+            case P1_REVEALED: {
+                data.state = P1_WIN_EXPIRED;
+                *p1_won = true;
+                *multiplier = 2;
+                break;
+            }
+
+            // all states where it's P1's turn
+            case P2_ATTACKED:
+            case P1_ATTACKED:
+            case P2_VERIFIED: {
+                data.state = P2_WIN_EXPIRED;
+                *p1_won = false;
+                *multiplier = 2;
+                break;
+            }
+
+            // all other states are already end states and were paid out
+            default: {
+                eosio_assert(false, "game already in an end state");
+            }
+        }
+}
+
 void automaton::p1_deposit()
 {
     eosio_assert(data.state == CREATED, "player1 funds already deposited");

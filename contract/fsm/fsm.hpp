@@ -55,8 +55,31 @@ class automaton
     automaton(const game_data &gd)
         : data(gd) {}
 
-    state get_state() { return (state)data.state; };
+    state get_winner()
+    {
+        eosio_assert(data.state == P1_WIN || data.state == P2_WIN || data.state == DRAW, "not in a regular winning state");
+        return (state)data.state;
+    };
 
+    bool is_in_end_state()
+    {
+        switch (data.state)
+        {
+        case P1_WIN:
+        case P2_WIN:
+        case DRAW:
+        case P1_WIN_EXPIRED:
+        case P2_WIN_EXPIRED:
+        case NEVER_STARTED:
+        {
+            return true;
+        }
+        default:
+            return false;
+        }
+    };
+
+    void expire_game(bool* p1_won, uint32_t* multiplier);
     void p1_deposit();
     void p2_deposit();
     void join(const eosio::checksum256 &commitment);
