@@ -5,12 +5,12 @@ const { CONTRACT_ACCOUNT } = process.env
 async function action() {
     try {
         const transaction = await sendTransaction({
-            name: `create`,
-            actor: `test1`,
+            name: `decommit`,
+            actor: CONTRACT_ACCOUNT,
             data: {
-                player: `test1`,
-                quantity: `0.1000 EOS`,
-                commitment: `7f8a03fe2ab222f6f8aa305c15b1e257b2636af7b9162ebca260600340433d3c`,
+                game_id: 730,
+                player: `player`,
+                decommitment: `decommitment`,
             },
         })
         console.log(`SUCCESS`)
