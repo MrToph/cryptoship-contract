@@ -52,7 +52,8 @@ public:
       game,
       eosio::indexed_by<"player1"_n, eosio::const_mem_fun<game, uint64_t, &game::by_player1>>,
       eosio::indexed_by<"player2"_n, eosio::const_mem_fun<game, uint64_t, &game::by_player2>>,
-      eosio::indexed_by<"expiresat"_n, eosio::const_mem_fun<game, uint64_t, &game::by_expires_at>>>
+      eosio::indexed_by<"expiresat"_n, eosio::const_mem_fun<game, uint64_t, &game::by_expires_at>>,
+      eosio::indexed_by<"state"_n, eosio::const_mem_fun<game, uint64_t, &game::by_game_state>>>
       games_t;
 
   auto get_game(uint64_t game_id)
