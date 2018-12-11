@@ -8,9 +8,9 @@ async function action() {
             name: `reveal`,
             actor: CONTRACT_ACCOUNT,
             data: {
-                game_id: 276,
+                game_id: 623,
                 player: `player`,
-                attack_responses: 919,
+                attack_responses: 137,
             },
         })
         console.log(`SUCCESS`)

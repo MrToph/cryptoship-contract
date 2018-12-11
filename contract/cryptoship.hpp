@@ -33,6 +33,10 @@ public:
     uint64_t id;
     eosio::name player1;
     eosio::name player2;
+    // needed for hashing from the frontend when hiding ships
+    // (pk id is not a nonce, it can repeat when erasing games)
+    uint32_t player1_nonce;
+    uint32_t player2_nonce;
     eosio::asset bet_amount_per_player;
     eosio::time_point_sec expires_at;
     // actual game data like ships, hits, etc.
@@ -44,7 +48,7 @@ public:
     uint64_t by_player2() const { return player2.value; }
     uint64_t by_game_state() const { return game_data.state; }
 
-    EOSLIB_SERIALIZE(game, (id)(player1)(player2)(bet_amount_per_player)(expires_at)(game_data))
+    EOSLIB_SERIALIZE(game, (id)(player1)(player2)(player1_nonce)(player2_nonce)(bet_amount_per_player)(expires_at)(game_data))
   };
 
   typedef eosio::multi_index<
@@ -74,8 +78,8 @@ public:
   ACTION init();
   // implemented in cleanup.cpp
   ACTION cleanup();
-  ACTION create(eosio::name player, const eosio::asset quantity, const eosio::checksum256& commitment);
-  ACTION join(eosio::name player, uint64_t game_id, const eosio::checksum256& commitment);
+  ACTION create(eosio::name player, uint32_t nonce, const eosio::asset quantity, const eosio::checksum256& commitment);
+  ACTION join(eosio::name player, uint32_t nonce, uint64_t game_id, const eosio::checksum256& commitment);
   ACTION attack(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attacks);
   ACTION reveal(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attack_responses);
   ACTION decommit(uint64_t game_id, eosio::name player, const eosio::checksum256& decommitment);

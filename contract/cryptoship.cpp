@@ -14,7 +14,7 @@ void cryptoship::init()
 }
 
 // create just "opens" the game by allocating and paying for RAM
-void cryptoship::create(name player, const asset quantity, const eosio::checksum256 &commitment)
+void cryptoship::create(name player, uint32_t nonce, const asset quantity, const eosio::checksum256 &commitment)
 {
     require_auth(player);
     // any step between 0.1 and 100 EOS
@@ -27,13 +27,14 @@ void cryptoship::create(name player, const asset quantity, const eosio::checksum
         // auto-increment key
         g.id = games.available_primary_key();
         g.player1 = player;
+        g.player1_nonce = nonce;
         g.bet_amount_per_player = quantity;
         g.expires_at = time_point_sec(now() + EXPIRE_OPEN);
         g.game_data = machine.data;
     });
 }
 
-void cryptoship::join(eosio::name player, uint64_t game_id, const eosio::checksum256 &commitment)
+void cryptoship::join(eosio::name player, uint32_t nonce, uint64_t game_id, const eosio::checksum256 &commitment)
 {
     require_auth(player);
 
@@ -45,6 +46,7 @@ void cryptoship::join(eosio::name player, uint64_t game_id, const eosio::checksu
 
     games.modify(game_itr, game_itr->player1, [&](auto &g) {
         g.expires_at = time_point_sec(now() + EXPIRE_TURN);
+        g.player2_nonce = nonce;
         g.game_data = machine.data;
     });
 }

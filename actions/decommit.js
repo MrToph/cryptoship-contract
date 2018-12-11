@@ -8,7 +8,7 @@ async function action() {
             name: `decommit`,
             actor: CONTRACT_ACCOUNT,
             data: {
-                game_id: 730,
+                game_id: 603,
                 player: `player`,
                 decommitment: `decommitment`,
             },

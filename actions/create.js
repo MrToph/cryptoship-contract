@@ -9,6 +9,7 @@ async function action() {
             actor: `test1`,
             data: {
                 player: `test1`,
+                nonce: 767,
                 quantity: `0.1000 EOS`,
                 commitment: `7f8a03fe2ab222f6f8aa305c15b1e257b2636af7b9162ebca260600340433d3c`,
             },

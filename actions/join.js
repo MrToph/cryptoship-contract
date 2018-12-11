@@ -9,7 +9,8 @@ async function action() {
             actor: CONTRACT_ACCOUNT,
             data: {
                 player: `player`,
-                game_id: 890,
+                nonce: 58,
+                game_id: 648,
                 commitment: `commitment`,
             },
         })

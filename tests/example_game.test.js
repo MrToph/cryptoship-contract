@@ -56,6 +56,7 @@ describe(`contract`, () => {
                     actor: `test1`,
                     data: {
                         player: `test1`,
+                        nonce: 0,
                         quantity: `0.1000 EOS`,
                         commitment: p1Commitment,
                     },
@@ -89,6 +90,7 @@ describe(`contract`, () => {
                     actor: `test2`,
                     data: {
                         player: `test2`,
+                        nonce: 0,
                         game_id: gameId,
                         commitment: p2Commitment,
                     },
