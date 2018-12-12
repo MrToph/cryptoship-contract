@@ -13,7 +13,7 @@ static const uint8_t BOARD_WIDTH = 5;
 static const uint8_t TILES_SIZE = BOARD_WIDTH * BOARD_WIDTH;
 enum tile : uint8_t
 {
-    UNKNWON,
+    UNKNOWN,
     ATTACK_UNREVEALED,
     ATTACK_MISS,
     ATTACK_SHIP1,
@@ -60,7 +60,7 @@ struct board
     {
         for (int i = 0; i < TILES_SIZE; i++)
         {
-            tiles.emplace_back(UNKNWON);
+            tiles.emplace_back(UNKNOWN);
         }
     }
 
@@ -124,7 +124,7 @@ struct board
     {
         int attacks_amount = attacker_board.get_attacks_amount();
         int unknown_tiles_amount = std::count_if(tiles.begin(), tiles.end(), [&](const uint8_t &tile) {
-            return tile == UNKNWON;
+            return tile == UNKNOWN;
         });
         int expected_attacks = std::min(attacks_amount, unknown_tiles_amount);
 
@@ -132,7 +132,7 @@ struct board
         eosio_assert(attacks.size() == expected_attacks, "incorrect amount of attacks");
 
         std::for_each(attacks.begin(), attacks.end(), [&](uint8_t tile_index) {
-            eosio_assert(tiles[tile_index] == UNKNWON, "tile already attacked");
+            eosio_assert(tiles[tile_index] == UNKNOWN, "tile already attacked");
             tiles[tile_index] = ATTACK_UNREVEALED;
         });
     }
@@ -153,7 +153,7 @@ struct board
             uint8_t announced_tile = tiles[shipIndex];
             // shipIndex must be in range and announced tile must be one of unknown, unrevealed or the correct ship
             if (shipIndex >= TILES_SIZE ||
-                !(announced_tile == UNKNWON || announced_tile == ATTACK_UNREVEALED || announced_tile == (ATTACK_SHIP1 + i)))
+                !(announced_tile == UNKNOWN || announced_tile == ATTACK_UNREVEALED || announced_tile == (ATTACK_SHIP1 + i)))
                 return false;
         }
 
@@ -166,7 +166,7 @@ struct board
                 continue;
 
             // every other tile must now be either unknown, unrevealed, or announced as a miss
-            if (!(t == UNKNWON || t == ATTACK_UNREVEALED || t == ATTACK_MISS))
+            if (!(t == UNKNOWN || t == ATTACK_UNREVEALED || t == ATTACK_MISS))
             {
                 return false;
             }

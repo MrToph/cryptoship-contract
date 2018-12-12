@@ -67,7 +67,7 @@ void cryptoship::p1_deposit(name player, const asset &quantity)
     machine.p1_deposit();
 
     games.modify(latest_game, player, [&](game &g) {
-        g.expires_at = time_point_sec(now() + EXPIRE_TURN);
+        g.expires_at = time_point_sec(now() + EXPIRE_OPEN);
         g.game_data = machine.data;
     });
 }
