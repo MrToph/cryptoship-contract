@@ -79,7 +79,96 @@ class automaton
         }
     };
 
-    void expire_game(bool* p1_won, uint32_t* multiplier);
+    void expire_game(bool *p1_can_claim, bool *p2_can_claim)
+    {
+        switch (data.state)
+        {
+        // no money was deposited
+        case CREATED:
+        {
+            data.state = NEVER_STARTED;
+            *p1_can_claim = false;
+            *p2_can_claim = false;
+            break;
+        }
+
+        // only P1 deposited and no P2 joined, full return
+        case P1_DEPOSITED:
+        {
+            data.state = NEVER_STARTED;
+            *p1_can_claim = true;
+            *p2_can_claim = false;
+            break;
+        }
+
+        // all states where it's P2's turn
+        case ALL_DEPOSITED:
+        case P2_REVEALED:
+        case P1_REVEALED:
+        {
+            data.state = P1_WIN_EXPIRED;
+            *p1_can_claim = true;
+            *p2_can_claim = false;
+            break;
+        }
+
+        // all states where it's P1's turn
+        case P2_ATTACKED:
+        case P1_ATTACKED:
+        case P2_VERIFIED:
+        {
+            data.state = P2_WIN_EXPIRED;
+            *p1_can_claim = false;
+            *p2_can_claim = true;
+            break;
+        }
+
+        // all other states are already end states
+        default:
+        {
+            eosio_assert(false, "game already in an end state");
+        }
+        }
+    }
+
+    uint32_t get_payout_multiplier()
+    {
+        switch (data.state)
+        {
+        case NEVER_STARTED:
+        {
+            // note that we get to this state also from CREATED
+            // where P1 did not transfer the funds yet
+            // however then he is p1_can_claim is set to false
+            return 1;
+        }
+
+        case P1_WIN:
+        case P1_WIN_EXPIRED:
+        {
+            return 2;
+        }
+
+        case P2_WIN:
+        case P2_WIN_EXPIRED:
+        {
+            return 2;
+        }
+
+        case DRAW:
+        {
+            return 1;
+        }
+        // all other states are not end states
+        default:
+        {
+            eosio_assert(false, "game is not in an end state - no claims possible yet");
+            return 0; // make compiler happy
+        }
+        }
+    }
+
+    void expire_game(bool *p1_won, uint32_t *multiplier);
     void p1_deposit();
     void p2_deposit();
     void join(const eosio::checksum256 &commitment);

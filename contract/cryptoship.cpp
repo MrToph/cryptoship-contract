@@ -28,6 +28,8 @@ void cryptoship::create(name player, uint32_t nonce, const asset quantity, const
         g.id = games.available_primary_key();
         g.player1 = player;
         g.player1_nonce = nonce;
+        g.player1_can_claim = false;
+        g.player2_can_claim = false;
         g.bet_amount_per_player = quantity;
         g.expires_at = time_point_sec(now() + EXPIRE_OPEN);
         g.game_data = machine.data;
@@ -79,6 +81,7 @@ void cryptoship::p2_deposit(name player, uint64_t game_id, const asset &quantity
     const auto game = games.find(game_id);
     eosio_assert(game != games.end(), "Game not found");
     eosio_assert(game->bet_amount_per_player == quantity, "game has a different bet amount");
+    eosio_assert(game->player1 != player, "cannot join your own game");
 
     fsm::automaton machine(game->game_data);
     machine.p2_deposit();
@@ -194,15 +197,15 @@ void cryptoship::decommit(uint64_t game_id, eosio::name player, const eosio::che
         }
         case DRAW:
         {
+            game_itr = get_game(game_id);
+            games.modify(game_itr, game_itr->player1, [&](auto &g) {
+                g.player1_can_claim = true;
+                g.player2_can_claim = true;
+            });
             // send deferred because P2 has incentive to block transfers
-            send_amount_deferred(
-                _self, game_itr->id,
-                game_itr->player1,
-                game_itr->bet_amount_per_player);
-            send_amount_deferred(
-                _self, game_itr->id,
-                game_itr->player2,
-                game_itr->bet_amount_per_player);
+            // as he gets 2*stake if this action fails
+            claim_deferred(_self, game_itr->id, game_itr->player1);
+            claim_deferred(_self, game_itr->id, game_itr->player2);
             break;
         }
         default:
@@ -211,6 +214,40 @@ void cryptoship::decommit(uint64_t game_id, eosio::name player, const eosio::che
         }
         }
     }
+}
+
+void cryptoship::claim(uint64_t game_id, eosio::name player)
+{
+    auto game_itr = get_game(game_id);
+    assert_player_in_game(*game_itr, player);
+
+    bool is_player1 = player == game_itr->player1;
+    bool can_claim = is_player1 ? game_itr->player1_can_claim : game_itr->player2_can_claim;
+    eosio_assert(can_claim, "not allowed to claim");
+
+    fsm::automaton machine(game_itr->game_data);
+    auto multiplier = machine.get_payout_multiplier();
+
+    games.modify(game_itr, game_itr->player1, [&](auto &g) {
+        if (is_player1)
+        {
+            g.player1_can_claim = false;
+        }
+        else
+        {
+            g.player2_can_claim = false;
+        }
+    });
+
+    action(permission_level{_self, "active"_n},
+           "eosio.token"_n,
+           "transfer"_n,
+           make_tuple(
+               _self,
+               player,
+               game_itr->bet_amount_per_player * multiplier,
+               std::to_string(game_itr->id)))
+        .send();
 }
 
 void cryptoship::testreset()
@@ -234,7 +271,7 @@ extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action)
         switch (action)
         {
             EOSIO_DISPATCH_HELPER(cryptoship,
-                                  (create)(join)(attack)(reveal)(decommit)(init)(cleanup)
+                                  (create)(join)(attack)(reveal)(decommit)(claim)(init)(cleanup)
 #ifndef PRODUCTION
                                       (testreset)
 #endif

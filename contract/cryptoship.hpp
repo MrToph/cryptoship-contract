@@ -37,6 +37,10 @@ public:
     // (pk id is not a nonce, it can repeat when erasing games)
     uint32_t player1_nonce;
     uint32_t player2_nonce;
+    // when payouts are done with deferred transactions and they fail
+    // this flag handles the alternative manual payout
+    bool player1_can_claim;
+    bool player2_can_claim;
     eosio::asset bet_amount_per_player;
     eosio::time_point_sec expires_at;
     // actual game data like ships, hits, etc.
@@ -48,7 +52,7 @@ public:
     uint64_t by_player2() const { return player2.value; }
     uint64_t by_game_state() const { return game_data.state; }
 
-    EOSLIB_SERIALIZE(game, (id)(player1)(player2)(player1_nonce)(player2_nonce)(bet_amount_per_player)(expires_at)(game_data))
+    EOSLIB_SERIALIZE(game, (id)(player1)(player2)(player1_nonce)(player2_nonce)(player1_can_claim)(player2_can_claim)(bet_amount_per_player)(expires_at)(game_data))
   };
 
   typedef eosio::multi_index<
@@ -83,6 +87,7 @@ public:
   ACTION attack(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attacks);
   ACTION reveal(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attack_responses);
   ACTION decommit(uint64_t game_id, eosio::name player, const eosio::checksum256& decommitment);
+  ACTION claim(uint64_t game_id, eosio::name player);
 
   void transfer(eosio::name from, eosio::name to, const eosio::asset &quantity, std::string memo);
   void p1_deposit(eosio::name player, const eosio::asset &quantity);
