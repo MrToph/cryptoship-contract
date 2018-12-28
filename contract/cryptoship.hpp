@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include <eosiolib/eosio.hpp>
 #include <eosiolib/asset.hpp>
+#include <eosiolib/eosio.hpp>
 #include <eosiolib/time.hpp>
 
 #include "board/board.hpp"
@@ -21,14 +21,13 @@ static const uint32_t EXPIRE_TURN = 60 * 60 * 24 * 1;
 // 2 days
 static const uint32_t EXPIRE_GAME_OVER = 60 * 60 * 24 * 2;
 
-CONTRACT cryptoship : public eosio::contract
-{
-public:
-  cryptoship(eosio::name receiver, eosio::name code, eosio::datastream<const char *> ds)
+CONTRACT cryptoship : public eosio::contract {
+ public:
+  cryptoship(eosio::name receiver, eosio::name code,
+             eosio::datastream<const char *> ds)
       : contract(receiver, code, ds), games(receiver, receiver.value) {}
 
-  TABLE game
-  {
+  TABLE game {
     // game meta information
     uint64_t id;
     eosio::name player1;
@@ -52,46 +51,57 @@ public:
     uint64_t by_player2() const { return player2.value; }
     uint64_t by_game_state() const { return game_data.state; }
 
-    EOSLIB_SERIALIZE(game, (id)(player1)(player2)(player1_nonce)(player2_nonce)(player1_can_claim)(player2_can_claim)(bet_amount_per_player)(expires_at)(game_data))
+    EOSLIB_SERIALIZE(game, (id)(player1)(player2)(player1_nonce)(player2_nonce)(
+                               player1_can_claim)(player2_can_claim)(
+                               bet_amount_per_player)(expires_at)(game_data))
   };
 
   typedef eosio::multi_index<
-      "games"_n,
-      game,
-      eosio::indexed_by<"player1"_n, eosio::const_mem_fun<game, uint64_t, &game::by_player1>>,
-      eosio::indexed_by<"player2"_n, eosio::const_mem_fun<game, uint64_t, &game::by_player2>>,
-      eosio::indexed_by<"expiresat"_n, eosio::const_mem_fun<game, uint64_t, &game::by_expires_at>>,
-      eosio::indexed_by<"state"_n, eosio::const_mem_fun<game, uint64_t, &game::by_game_state>>>
+      "games"_n, game,
+      eosio::indexed_by<
+          "player1"_n, eosio::const_mem_fun<game, uint64_t, &game::by_player1>>,
+      eosio::indexed_by<
+          "player2"_n, eosio::const_mem_fun<game, uint64_t, &game::by_player2>>,
+      eosio::indexed_by<
+          "expiresat"_n,
+          eosio::const_mem_fun<game, uint64_t, &game::by_expires_at>>,
+      eosio::indexed_by<"state"_n, eosio::const_mem_fun<game, uint64_t,
+                                                        &game::by_game_state>>>
       games_t;
 
-  auto get_game(uint64_t game_id)
-  {
+  auto get_game(uint64_t game_id) {
     const auto game = games.find(game_id);
     eosio_assert(game != games.end(), "Game not found");
     return game;
   }
 
-  void assert_player_in_game(const game &game, eosio::name player)
-  {
-    eosio_assert(game.player1 == player || game.player2 == player, "You are not part of this game");
+  void assert_player_in_game(const game &game, eosio::name player) {
+    eosio_assert(game.player1 == player || game.player2 == player,
+                 "You are not part of this game");
   }
 
 #ifndef PRODUCTION
   ACTION testreset();
 #endif
-  ACTION init();
   // implemented in cleanup.cpp
   ACTION cleanup();
-  ACTION create(eosio::name player, uint32_t nonce, const eosio::asset quantity, const eosio::checksum256& commitment);
-  ACTION join(eosio::name player, uint32_t nonce, uint64_t game_id, const eosio::checksum256& commitment);
-  ACTION attack(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attacks);
-  ACTION reveal(uint64_t game_id, eosio::name player, const std::vector<uint8_t> &attack_responses);
-  ACTION decommit(uint64_t game_id, eosio::name player, const eosio::checksum256& decommitment);
+  ACTION create(eosio::name player, uint32_t nonce, const eosio::asset quantity,
+                const eosio::checksum256 &commitment);
+  ACTION join(eosio::name player, uint32_t nonce, uint64_t game_id,
+              const eosio::checksum256 &commitment);
+  ACTION attack(uint64_t game_id, eosio::name player,
+                const std::vector<uint8_t> &attacks);
+  ACTION reveal(uint64_t game_id, eosio::name player,
+                const std::vector<uint8_t> &attack_responses);
+  ACTION decommit(uint64_t game_id, eosio::name player,
+                  const eosio::checksum256 &decommitment);
   ACTION claim(uint64_t game_id, eosio::name player);
 
-  void transfer(eosio::name from, eosio::name to, const eosio::asset &quantity, std::string memo);
+  void transfer(eosio::name from, eosio::name to, const eosio::asset &quantity,
+                std::string memo);
   void p1_deposit(eosio::name player, const eosio::asset &quantity);
-  void p2_deposit(eosio::name player, uint64_t game_id, const eosio::asset &quantity);
+  void p2_deposit(eosio::name player, uint64_t game_id,
+                  const eosio::asset &quantity);
 
   games_t games;
 };
