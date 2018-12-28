@@ -11,6 +11,7 @@ Edges are the possible contract actions available from each state.
 # Template
 
 Requires `eosio-cpp (>= v1.4.0)` to be installed from the [eosio.cdt](https://github.com/EOSIO/eosio.cdt) package to compile the smart contract.
+Also needs `cmake` for compiling the smart contract. (`brew install cmake`)
 
 ## Compiling
 

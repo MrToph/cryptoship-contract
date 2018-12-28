@@ -1,4 +1,5 @@
-const { Api, JsonRpc, JsSignatureProvider } = require(`eosjs`)
+const { Api, JsonRpc } = require(`eosjs`)
+const JsSignatureProvider = require(`eosjs/dist/eosjs-jssig`).default
 const fetch = require(`node-fetch`) // node only; not needed in browsers
 const { TextEncoder, TextDecoder } = require(`util`) // node only; native TextEncoder/Decoder
 const ecc = require(`eosjs-ecc`)
