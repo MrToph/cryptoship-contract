@@ -6,7 +6,7 @@
 #include <eosiolib/eosio.hpp>
 #include <eosiolib/time.hpp>
 
-#include "../board/board.hpp"
+#include "../logic/board.hpp"
 
 namespace fsm {
 // finite state machine states
