@@ -18,6 +18,7 @@ enum tile : uint8_t {
   ATTACK_SHIP2,
   ATTACK_SHIP3
 };
+
 static const std::map<tile, uint8_t> ship_attacks_map = {
     {ATTACK_SHIP1, 2}, {ATTACK_SHIP2, 1}, {ATTACK_SHIP3, 1}};
 
@@ -51,6 +52,8 @@ struct board {
       tiles.emplace_back(UNKNOWN);
     }
   }
+
+  EOSLIB_SERIALIZE(board, (tiles)(commitment))
 
   uint8_t get_max_attacks_amount() const {
     uint8_t attacks = 0;
@@ -159,7 +162,6 @@ struct board {
     return true;
   }
 
-  EOSLIB_SERIALIZE(board, (tiles)(commitment))
 };
 
 }  // namespace logic
