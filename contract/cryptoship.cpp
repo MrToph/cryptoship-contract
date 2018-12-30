@@ -13,6 +13,7 @@ void cryptoship::create(name player, uint32_t nonce, const asset quantity,
                         const eosio::checksum256 &commitment) {
   require_auth(player);
   // any step between 0.1 and 100 EOS
+  eosio_assert(quantity.symbol == EOS_SYMBOL, "only EOS tokens allowed");
   eosio_assert(quantity.amount == 1E3 || quantity.amount == 1E4 ||
                    quantity.amount == 1E5 || quantity.amount == 1E6,
                "Must pay any of 0.1 / 1.0 / 10.0 / 100.0 EOS");
