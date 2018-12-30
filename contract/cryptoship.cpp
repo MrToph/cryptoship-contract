@@ -61,7 +61,7 @@ void cryptoship::p1_deposit(name player, const asset &quantity) {
   eosio_assert(latest_game != games.end(), "must create a game first");
   eosio_assert(latest_game->player1 == player, "must pay for your own game");
   eosio_assert(latest_game->bet_amount_per_player == quantity,
-               "game has a different bet amount");
+               "game has a different bet amount or token");
 
   fsm::automaton machine(latest_game->game_data);
   machine.p1_deposit();
