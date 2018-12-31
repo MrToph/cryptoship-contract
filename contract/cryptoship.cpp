@@ -18,8 +18,8 @@ void cryptoship::create(name player, uint32_t nonce, const asset quantity,
                    quantity.amount == 1E5 || quantity.amount == 1E6,
                "Must pay any of 0.1 / 1.0 / 10.0 / 100.0 EOS");
 
-  // default constructor initializes game data correctly
   fsm::automaton machine(commitment);
+
   // make player pay for RAM
   games.emplace(player, [&](game &g) {
     // auto-increment key
@@ -77,18 +77,17 @@ void cryptoship::p2_deposit(name player, uint64_t game_id,
                             const asset &quantity) {
   require_auth(player);
 
-  const auto game = games.find(game_id);
-  eosio_assert(game != games.end(), "Game not found");
-  eosio_assert(game->bet_amount_per_player == quantity,
+  auto game_itr = get_game(game_id);
+  eosio_assert(game_itr->bet_amount_per_player == quantity,
                "game has a different bet amount");
-  eosio_assert(game->player1 != player, "cannot join your own game");
+  eosio_assert(game_itr->player1 != player, "cannot join your own game");
 
-  fsm::automaton machine(game->game_data);
+  fsm::automaton machine(game_itr->game_data);
   machine.p2_deposit();
 
   // cannot make second player pay for updates as this is in a require_recipient
   // call from transfer
-  games.modify(game, game->player1, [&](auto &g) {
+  games.modify(game_itr, game_itr->player1, [&](auto &g) {
     g.player2 = player;
     g.expires_at = time_point_sec(now() + EXPIRE_OPEN);
     g.game_data = machine.data;
