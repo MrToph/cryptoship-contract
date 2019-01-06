@@ -78,31 +78,6 @@ struct board {
 
   bool has_ships() const { return get_attacks_amount() > 0; }
 
-  // attack_responses is an array of integers in range 0,1,2,3
-  // each representing miss or the type of the hit ship
-  void reveal(const std::vector<uint8_t> &attack_responses) {
-    std::for_each(
-        attack_responses.begin(), attack_responses.end(), [&](uint8_t r) {
-          eosio_assert(
-              r == ATTACK_MISS || r == ATTACK_SHIP1 || r == ATTACK_SHIP2 ||
-                  r == ATTACK_SHIP3,
-              "invalid attack response. must be 'miss' or a ship type");
-        });
-    logic::assert_no_duplicate_ships(attack_responses);
-
-    int i = 0;
-    std::for_each(tiles.begin(), tiles.end(), [&](uint8_t &tile) {
-      if (tile == ATTACK_UNREVEALED) {
-        eosio_assert(i < attack_responses.size(),
-                     "must reveal all unrevealed attacks");
-        tile = attack_responses[i++];
-      }
-    });
-
-    eosio_assert(i == attack_responses.size(),
-                 "tried to reveal more attacks than existant");
-  }
-
   void attack(const std::vector<uint8_t> &attacks,
               const board &attacker_board) {
     int attacks_amount = attacker_board.get_attacks_amount();
@@ -120,6 +95,31 @@ struct board {
       eosio_assert(tiles[tile_index] == UNKNOWN, "tile already attacked");
       tiles[tile_index] = ATTACK_UNREVEALED;
     });
+  }
+
+  // attack_responses is an array of (a part of) tile enums indicating hit or
+  // miss sorted from the lowest to highest index of the tiles to be revealed
+  void reveal(const std::vector<uint8_t> &attack_responses) {
+    std::for_each(
+        attack_responses.begin(), attack_responses.end(), [&](uint8_t r) {
+          eosio_assert(
+              r == ATTACK_MISS || r == ATTACK_SHIP1 || r == ATTACK_SHIP2 ||
+                  r == ATTACK_SHIP3,
+              "invalid attack response. must be 'miss' or a ship type");
+        });
+    logic::assert_no_duplicate_ships(attack_responses);
+
+    int reveal_counter = 0;
+    std::for_each(tiles.begin(), tiles.end(), [&](uint8_t &tile) {
+      if (tile == ATTACK_UNREVEALED) {
+        eosio_assert(reveal_counter < attack_responses.size(),
+                     "must reveal all unrevealed attacks");
+        tile = attack_responses[reveal_counter++];
+      }
+    });
+
+    eosio_assert(reveal_counter == attack_responses.size(),
+                 "tried to reveal more attacks than existant");
   }
 
   // this function gets called when the game is over and verifies that the
@@ -161,7 +161,6 @@ struct board {
     // passed all checks
     return true;
   }
-
 };
 
 }  // namespace logic
