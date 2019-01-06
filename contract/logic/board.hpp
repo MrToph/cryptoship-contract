@@ -125,41 +125,46 @@ struct board {
   // this function gets called when the game is over and verifies that the
   // player 1) provides a valid decommitment such that SHA256(decommitment) =
   // commitment 2) announced the attack responses correctly
-  bool decommit(const eosio::checksum256 &decommitment) const {
+  void decommit(const eosio::checksum256 &decommitment) const {
     const auto d_bytes = decommitment.extract_as_byte_array();
     assert_sha256((const char *)d_bytes.data(), d_bytes.size(), commitment);
-    uint8_t revealed_ship_indexes[] = {d_bytes[0], d_bytes[1], d_bytes[2]};
+    std::vector<uint8_t> revealed_ship_indexes = {d_bytes[0], d_bytes[1],
+                                                  d_bytes[2]};
+
+    const char *assert_message = "caught cheating";
 
     // check revealed_ship_indexes for validity
     for (int i = 0; i < 3; i++) {
-      int shipIndex = revealed_ship_indexes[i];
-      uint8_t announced_tile = tiles[shipIndex];
-      // shipIndex must be in range and announced tile must be one of unknown,
-      // unrevealed or the correct ship
-      if (shipIndex >= TILES_SIZE ||
-          !(announced_tile == UNKNOWN || announced_tile == ATTACK_UNREVEALED ||
-            announced_tile == (ATTACK_SHIP1 + i)))
-        return false;
+      uint8_t ship_index = revealed_ship_indexes[i];
+      // ship_index must be in range
+      eosio_assert(ship_index < TILES_SIZE, assert_message);
+
+      uint8_t announced_tile = tiles[ship_index];
+      // announced tile must not have been revealed yet or match the correct
+      // ship
+      eosio_assert(announced_tile == UNKNOWN ||
+                       announced_tile == ATTACK_UNREVEALED ||
+                       announced_tile == (ATTACK_SHIP1 + i),
+                   assert_message);
     }
 
     // assert other indexes were not announced as hits
     for (auto index = 0; index < TILES_SIZE; index++) {
       uint8_t t = tiles[index];
-      // the revealed_ship_indexes have already been checked for validity
-      if (index == revealed_ship_indexes[0] ||
-          index == revealed_ship_indexes[1] ||
-          index == revealed_ship_indexes[2])
-        continue;
 
-      // every other tile must now be either unknown, unrevealed, or announced
-      // as a miss
-      if (!(t == UNKNOWN || t == ATTACK_UNREVEALED || t == ATTACK_MISS)) {
-        return false;
+      // the revealed_ship_indexes have already been checked for validity
+      if (std::find(revealed_ship_indexes.begin(), revealed_ship_indexes.end(),
+                    index) != revealed_ship_indexes.end()) {
+        continue;
       }
+
+      // every other tile must now either not have been revealed yet or
+      // announced as a miss
+      eosio_assert(t == UNKNOWN || t == ATTACK_UNREVEALED || t == ATTACK_MISS,
+                   assert_message);
     }
 
     // passed all checks
-    return true;
   }
 };
 
