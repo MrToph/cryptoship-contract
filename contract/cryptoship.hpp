@@ -11,7 +11,7 @@
 
 #define EOS_SYMBOL symbol("EOS", 4)
 
-// #define PRODUCTION
+#define PRODUCTION
 
 // 7 days
 static const uint32_t EXPIRE_OPEN = 60 * 60 * 24 * 7;

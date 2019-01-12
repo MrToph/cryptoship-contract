@@ -227,6 +227,7 @@ void cryptoship::claim(uint64_t game_id, eosio::name player) {
       .send();
 }
 
+#ifndef PRODUCTION
 void cryptoship::testreset() {
   require_auth(_self);
   auto itr = games.begin();
@@ -234,6 +235,7 @@ void cryptoship::testreset() {
     itr = games.erase(itr);
   }
 }
+#endif
 
 extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
   if (code == "eosio.token"_n.value && action == "transfer"_n.value) {
