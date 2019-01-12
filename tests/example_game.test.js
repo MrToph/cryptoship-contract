@@ -73,6 +73,7 @@ describe(`contract`, () => {
                     },
                 },
             ])
+            // join
             result = await sendTransaction([
                 {
                     account: `eosio.token`,
@@ -203,7 +204,6 @@ describe(`contract`, () => {
                 },
             })
 
-            // console.log(getPrintOutput(result))
             const game = await getLatestGame()
             // P2 should have won, i.e. state 9
             expect(game.game_data.state).toBe(9)
