@@ -17,8 +17,8 @@
 static const uint32_t EXPIRE_OPEN = 60 * 60 * 24 * 7;
 // 1 day
 static const uint32_t EXPIRE_TURN = 60 * 60 * 24 * 1;
-// 2 days
-static const uint32_t EXPIRE_GAME_OVER = 60 * 60 * 24 * 2;
+// 3 days
+static const uint32_t EXPIRE_GAME_OVER = 60 * 60 * 24 * 3;
 
 CONTRACT cryptoship : public eosio::contract {
  public:
