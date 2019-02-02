@@ -21,9 +21,10 @@ void cryptoship::cleanup() {
   auto games_by_expiry = games.get_index<"expiresat"_n>();
   uint8_t count = 3;
 
+  auto upper_bound = games_by_expiry.upper_bound(now());
   // iterate through all expired games
   for (auto game_itr = games_by_expiry.begin();
-       count > 0 && game_itr != games_by_expiry.upper_bound(now()); count--) {
+       count > 0 && game_itr != upper_bound; count--) {
     fsm::automaton machine(game_itr->game_data);
 
     // 1. either game was already in an end state => it's time to free RAM
