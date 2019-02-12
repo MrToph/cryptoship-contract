@@ -31,17 +31,16 @@ void cryptoship::cleanup() {
 
   // iterate over these games and advance them
   for (uint64_t id : expired_ids) {
-    auto game_itr = games_by_expiry.find(id);
+    auto game_itr = games.find(id);
 
-    if (game_itr == games_by_expiry.end()) {
+    if (game_itr == games.end()) {
       continue;
     }
-
     fsm::automaton machine(game_itr->game_data);
 
     // 1. either game was already in an end state => it's time to free RAM
     if (machine.is_in_end_state()) {
-      games_by_expiry.erase(game_itr);
+      games.erase(game_itr);
     }
     // 2. or a player did not respond => move to an end state and allow payouts
     else {
@@ -49,7 +48,7 @@ void cryptoship::cleanup() {
       bool player2_can_claim = false;
       machine.expire_game(&player1_can_claim, &player2_can_claim);
 
-      games_by_expiry.modify(game_itr, game_itr->player1, [&](auto &g) {
+      games.modify(game_itr, game_itr->player1, [&](auto &g) {
         g.expires_at = time_point_sec(now() + EXPIRE_GAME_OVER);
         g.game_data = machine.data;
         g.player1_can_claim = player1_can_claim;
@@ -72,5 +71,9 @@ void cryptoship::cleanup() {
   t.actions.emplace_back(permission_level{_self, "active"_n}, _self,
                          "cleanup"_n, cleanup_s{});
   t.delay_sec = CLEANUP_PERIOD_IN_SECONDS;
-  t.send(CLEANUP_SENDER_ID, _self, true);
+  // cannot replace transactions right now
+  // https://github.com/EOSIO/eos/issues/6541
+  // t.send(CLEANUP_SENDER_ID, _self, true);
+  cancel_deferred(CLEANUP_SENDER_ID);
+  t.send(CLEANUP_SENDER_ID, _self, false);
 }
