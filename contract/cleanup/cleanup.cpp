@@ -21,15 +21,27 @@ void cryptoship::cleanup() {
   auto games_by_expiry = games.get_index<"expiresat"_n>();
   uint8_t count = 3;
 
+  // store up to count expired games
   auto upper_bound = games_by_expiry.upper_bound(now());
-  // iterate through all expired games
+  std::vector<uint64_t> expired_ids;
   for (auto game_itr = games_by_expiry.begin();
-       count > 0 && game_itr != upper_bound; count--) {
+       count > 0 && game_itr != upper_bound; count--, game_itr++) {
+    expired_ids.push_back(game_itr->id);
+  }
+
+  // iterate over these games and advance them
+  for (uint64_t id : expired_ids) {
+    auto game_itr = games_by_expiry.find(id);
+
+    if (game_itr == games_by_expiry.end()) {
+      continue;
+    }
+
     fsm::automaton machine(game_itr->game_data);
 
     // 1. either game was already in an end state => it's time to free RAM
     if (machine.is_in_end_state()) {
-      game_itr = games_by_expiry.erase(game_itr);
+      games_by_expiry.erase(game_itr);
     }
     // 2. or a player did not respond => move to an end state and allow payouts
     else {
@@ -52,7 +64,6 @@ void cryptoship::cleanup() {
       if (player2_can_claim) {
         claim_deferred(_self, game_itr->id, game_itr->player2);
       }
-      game_itr++;
     }
   }
 
