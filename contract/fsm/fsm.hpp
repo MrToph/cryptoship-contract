@@ -122,7 +122,7 @@ class automaton {
       case NEVER_STARTED: {
         // note that we get to this state also from CREATED
         // where P1 did not transfer the funds yet
-        // however then he is p1_can_claim is set to false
+        // however then p1_can_claim is set to false
         return 1;
       }
 

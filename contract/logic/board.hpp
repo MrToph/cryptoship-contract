@@ -39,7 +39,7 @@ static const void assert_no_duplicate_ships(const std::vector<uint8_t> &v) {
 }
 
 // a board stores (hidden) board information for a single player,
-// i.e., the opposing player's attacks and their announced results
+// i.e., the opposing player's attacks and our announced results
 struct board {
   // is used as vector<tile>, but cannot be serialized by EOS
   std::vector<uint8_t> tiles;

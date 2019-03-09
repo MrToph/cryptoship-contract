@@ -12,7 +12,7 @@ static const uint128_t CLEANUP_SENDER_ID = -1;
 struct cleanup_s {};
 
 // This action is invoked by deferred transactions
-// Its purpose is to clean "advance" games that are expired
+// Its purpose is to "advance" games that are expired
 // for instance by setting expired running games to game over
 // or deleting finished games after their expiry date
 void cryptoship::cleanup() {
