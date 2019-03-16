@@ -35,7 +35,7 @@ describe(`contract`, () => {
     const p2Commitment = createCommitment(p2Seed)
 
     beforeEach(async () => {
-        await sendTransaction({ name: `testreset` })
+        await sendTransaction({ name: `testreset`, data: { max_games: 0 } })
     })
 
     afterEach(async () => {
@@ -206,7 +206,7 @@ describe(`contract`, () => {
 
             const game = await getLatestGame()
             // P2 should have won, i.e. state 9
-            expect(game.game_data.state).toBe(9)
+            return expect(game.game_data.state).toBe(9)
         } catch (ex) {
             console.log(getErrorDetail(ex))
         }

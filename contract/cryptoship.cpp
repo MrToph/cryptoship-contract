@@ -228,11 +228,14 @@ void cryptoship::claim(uint64_t game_id, eosio::name player) {
 }
 
 #ifndef PRODUCTION
-void cryptoship::testreset() {
+void cryptoship::testreset(uint16_t max_games) {
   require_auth(_self);
+  uint16_t count = 0;
+  max_games = max_games == 0 ? -1 : max_games;
   auto itr = games.begin();
-  while (itr != games.end()) {
+  while (itr != games.end() && count < max_games) {
     itr = games.erase(itr);
+    count++;
   }
 }
 #endif
