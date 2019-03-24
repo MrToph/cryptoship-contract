@@ -3,9 +3,9 @@
 #include <string>
 #include <vector>
 
-#include <eosiolib/asset.hpp>
-#include <eosiolib/eosio.hpp>
-#include <eosiolib/time.hpp>
+#include <eosio/asset.hpp>
+#include <eosio/eosio.hpp>
+#include <eosio/time.hpp>
 
 #include "fsm/fsm.hpp"
 
@@ -13,12 +13,9 @@
 
 // #define PRODUCTION
 
-// 7 days
-static const uint32_t EXPIRE_OPEN = 60 * 60 * 24 * 7;
-// 1 day
-static const uint32_t EXPIRE_TURN = 60 * 60 * 24 * 1;
-// 3 days
-static const uint32_t EXPIRE_GAME_OVER = 60 * 60 * 24 * 3;
+static const eosio::microseconds EXPIRE_OPEN = eosio::days(7);
+static const eosio::microseconds EXPIRE_TURN = eosio::days(1);
+static const eosio::microseconds EXPIRE_GAME_OVER = eosio::days(3);
 
 CONTRACT cryptoship : public eosio::contract {
  public:
@@ -70,12 +67,12 @@ CONTRACT cryptoship : public eosio::contract {
 
   auto get_game(uint64_t game_id) {
     const auto game = games.find(game_id);
-    eosio_assert(game != games.end(), "Game not found");
+    eosio::check(game != games.end(), "Game not found");
     return game;
   }
 
   void assert_player_in_game(const game &game, eosio::name player) {
-    eosio_assert(game.player1 == player || game.player2 == player,
+    eosio::check(game.player1 == player || game.player2 == player,
                  "You are not part of this game");
   }
 
@@ -96,7 +93,7 @@ CONTRACT cryptoship : public eosio::contract {
                   const eosio::checksum256 &decommitment);
   ACTION claim(uint64_t game_id, eosio::name player);
 
-  void transfer(eosio::name from, eosio::name to, const eosio::asset &quantity,
+  [[eosio::on_notify("eosio.token::transfer")]] void transfer(eosio::name from, eosio::name to, const eosio::asset &quantity,
                 std::string memo);
   void p1_deposit(eosio::name player, const eosio::asset &quantity);
   void p2_deposit(eosio::name player, uint64_t game_id,

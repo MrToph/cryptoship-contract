@@ -1,4 +1,4 @@
-#include <eosiolib/transaction.hpp>
+#include <eosio/transaction.hpp>
 #include "../cryptoship.hpp"
 #include "../utils/utils.hpp"
 
@@ -22,7 +22,7 @@ void cryptoship::cleanup() {
   uint8_t count = 3;
 
   // store up to count expired games
-  auto upper_bound = games_by_expiry.upper_bound(now());
+  auto upper_bound = games_by_expiry.upper_bound(eosio::current_time_point().sec_since_epoch());
   std::vector<uint64_t> expired_ids;
   for (auto game_itr = games_by_expiry.begin();
        count > 0 && game_itr != upper_bound; count--, game_itr++) {
@@ -49,7 +49,7 @@ void cryptoship::cleanup() {
       machine.expire_game(&player1_can_claim, &player2_can_claim);
 
       games.modify(game_itr, game_itr->player1, [&](auto &g) {
-        g.expires_at = time_point_sec(now() + EXPIRE_GAME_OVER);
+        g.expires_at = eosio::current_time_point() + EXPIRE_GAME_OVER;
         g.game_data = machine.data;
         g.player1_can_claim = player1_can_claim;
         g.player2_can_claim = player2_can_claim;

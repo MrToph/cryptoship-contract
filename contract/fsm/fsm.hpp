@@ -2,9 +2,9 @@
 
 #include <string>
 
-#include <eosiolib/asset.hpp>
-#include <eosiolib/eosio.hpp>
-#include <eosiolib/time.hpp>
+#include <eosio/asset.hpp>
+#include <eosio/eosio.hpp>
+#include <eosio/time.hpp>
 
 #include "../logic/board.hpp"
 
@@ -51,7 +51,7 @@ class automaton {
   automaton(const game_data &gd) : data(gd) {}
 
   state get_winner() {
-    eosio_assert(
+    eosio::check(
         data.state == P1_WIN || data.state == P2_WIN || data.state == DRAW,
         "not in a regular winning state");
     return (state)data.state;
@@ -112,7 +112,7 @@ class automaton {
 
       // all other states are already end states
       default: {
-        eosio_assert(false, "game already in an end state");
+        eosio::check(false, "game already in an end state");
       }
     }
   }
@@ -141,7 +141,7 @@ class automaton {
       }
       // all other states are not end states
       default: {
-        eosio_assert(false,
+        eosio::check(false,
                      "game is not in an end state - no claims possible yet");
         return 0;  // make compiler happy
       }

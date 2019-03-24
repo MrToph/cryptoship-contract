@@ -13,8 +13,8 @@ void cryptoship::create(name player, uint32_t nonce, const asset quantity,
                         const eosio::checksum256 &commitment) {
   require_auth(player);
   // any step between 0.1 and 100 EOS
-  eosio_assert(quantity.symbol == EOS_SYMBOL, "only EOS tokens allowed");
-  eosio_assert(quantity.amount == 1E3 || quantity.amount == 1E4 ||
+  eosio::check(quantity.symbol == EOS_SYMBOL, "only EOS tokens allowed");
+  eosio::check(quantity.amount == 1E3 || quantity.amount == 1E4 ||
                    quantity.amount == 1E5 || quantity.amount == 1E6,
                "Must pay any of 0.1 / 1.0 / 10.0 / 100.0 EOS");
 
@@ -29,7 +29,7 @@ void cryptoship::create(name player, uint32_t nonce, const asset quantity,
     g.player1_can_claim = false;
     g.player2_can_claim = false;
     g.bet_amount_per_player = quantity;
-    g.expires_at = time_point_sec(now() + EXPIRE_OPEN);
+    g.expires_at = eosio::current_time_point() + EXPIRE_OPEN;
     g.game_data = machine.data;
   });
 }
@@ -39,14 +39,14 @@ void cryptoship::join(eosio::name player, uint32_t nonce, uint64_t game_id,
   require_auth(player);
 
   auto game_itr = get_game(game_id);
-  eosio_assert(game_itr->player2 == player,
+  eosio::check(game_itr->player2 == player,
                "deposit of another player already exists");
 
   fsm::automaton machine(game_itr->game_data);
   machine.join(commitment);
 
   games.modify(game_itr, game_itr->player1, [&](auto &g) {
-    g.expires_at = time_point_sec(now() + EXPIRE_TURN);
+    g.expires_at = eosio::current_time_point() + EXPIRE_TURN;
     g.player2_nonce = nonce;
     g.game_data = machine.data;
   });
@@ -59,16 +59,16 @@ void cryptoship::p1_deposit(name player, const asset &quantity) {
   auto latest_game = games.end();
   latest_game--;
 
-  eosio_assert(latest_game != games.end(), "must create a game first");
-  eosio_assert(latest_game->player1 == player, "must pay for your own game");
-  eosio_assert(latest_game->bet_amount_per_player == quantity,
+  eosio::check(latest_game != games.end(), "must create a game first");
+  eosio::check(latest_game->player1 == player, "must pay for your own game");
+  eosio::check(latest_game->bet_amount_per_player == quantity,
                "game has a different bet amount or token");
 
   fsm::automaton machine(latest_game->game_data);
   machine.p1_deposit();
 
   games.modify(latest_game, player, [&](game &g) {
-    g.expires_at = time_point_sec(now() + EXPIRE_OPEN);
+    g.expires_at = eosio::current_time_point() + EXPIRE_OPEN;
     g.game_data = machine.data;
   });
 }
@@ -78,9 +78,9 @@ void cryptoship::p2_deposit(name player, uint64_t game_id,
   require_auth(player);
 
   auto game_itr = get_game(game_id);
-  eosio_assert(game_itr->bet_amount_per_player == quantity,
+  eosio::check(game_itr->bet_amount_per_player == quantity,
                "game has a different bet amount");
-  eosio_assert(game_itr->player1 != player, "cannot join your own game");
+  eosio::check(game_itr->player1 != player, "cannot join your own game");
 
   fsm::automaton machine(game_itr->game_data);
   machine.p2_deposit();
@@ -89,7 +89,7 @@ void cryptoship::p2_deposit(name player, uint64_t game_id,
   // call from transfer
   games.modify(game_itr, game_itr->player1, [&](auto &g) {
     g.player2 = player;
-    g.expires_at = time_point_sec(now() + EXPIRE_OPEN);
+    g.expires_at = eosio::current_time_point() + EXPIRE_OPEN;
     g.game_data = machine.data;
   });
 }
@@ -101,10 +101,10 @@ void cryptoship::transfer(name from, name to, const asset &quantity,
     return;
   }
 
-  eosio_assert(to == _self, "contract is not involved in this transfer");
-  eosio_assert(quantity.symbol.is_valid(), "invalid quantity");
-  eosio_assert(quantity.amount > 0, "only positive quantity allowed");
-  eosio_assert(quantity.symbol == EOS_SYMBOL, "only EOS tokens allowed");
+  eosio::check(to == _self, "contract is not involved in this transfer");
+  eosio::check(quantity.symbol.is_valid(), "invalid quantity");
+  eosio::check(quantity.amount > 0, "only positive quantity allowed");
+  eosio::check(quantity.symbol == EOS_SYMBOL, "only EOS tokens allowed");
 
   if (memo == "create") {
     p1_deposit(from, quantity);
@@ -124,7 +124,7 @@ void cryptoship::attack(uint64_t game_id, eosio::name player,
   machine.attack(player == game_itr->player1, attacks);
 
   games.modify(game_itr, game_itr->player1, [&](auto &g) {
-    g.expires_at = time_point_sec(now() + EXPIRE_TURN);
+    g.expires_at = eosio::current_time_point() + EXPIRE_TURN;
     g.game_data = machine.data;
   });
 }
@@ -139,7 +139,7 @@ void cryptoship::reveal(uint64_t game_id, eosio::name player,
   machine.reveal(player == game_itr->player1, attack_responses);
 
   games.modify(game_itr, game_itr->player1, [&](auto &g) {
-    g.expires_at = time_point_sec(now() + EXPIRE_TURN);
+    g.expires_at = eosio::current_time_point() + EXPIRE_TURN;
     g.game_data = machine.data;
   });
 }
@@ -157,7 +157,7 @@ void cryptoship::decommit(uint64_t game_id, eosio::name player,
   games.modify(game_itr, game_itr->player1, [&](auto &g) {
     // player1 decommits means that the game is over and a winner was determined
     g.expires_at =
-        time_point_sec(now() + (is_player1 ? EXPIRE_GAME_OVER : EXPIRE_TURN));
+        eosio::current_time_point() + (is_player1 ? EXPIRE_GAME_OVER : EXPIRE_TURN);
     g.game_data = machine.data;
   });
 
@@ -195,7 +195,7 @@ void cryptoship::decommit(uint64_t game_id, eosio::name player,
         break;
       }
       default: {
-        eosio_assert(false, "FSM is in a broken state");
+        eosio::check(false, "FSM is in a broken state");
       }
     }
   }
@@ -208,7 +208,7 @@ void cryptoship::claim(uint64_t game_id, eosio::name player) {
   bool is_player1 = player == game_itr->player1;
   bool can_claim =
       is_player1 ? game_itr->player1_can_claim : game_itr->player2_can_claim;
-  eosio_assert(can_claim, "not allowed to claim");
+  eosio::check(can_claim, "not allowed to claim");
 
   fsm::automaton machine(game_itr->game_data);
   auto multiplier = machine.get_payout_multiplier();
@@ -239,19 +239,3 @@ void cryptoship::testreset(uint16_t max_games) {
   }
 }
 #endif
-
-extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
-  if (code == "eosio.token"_n.value && action == "transfer"_n.value) {
-    eosio::execute_action(eosio::name(receiver), eosio::name(code),
-                          &cryptoship::transfer);
-  } else if (code == receiver) {
-    switch (action) {
-      EOSIO_DISPATCH_HELPER(
-          cryptoship, (create)(join)(attack)(reveal)(decommit)(claim)(cleanup)
-#ifndef PRODUCTION
-                          (testreset)
-#endif
-      )
-    }
-  }
-}

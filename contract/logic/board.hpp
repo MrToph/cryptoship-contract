@@ -3,9 +3,10 @@
 #include <algorithm>  // std::min
 #include <string>
 
-#include <eosiolib/asset.hpp>
-#include <eosiolib/eosio.hpp>
-#include <eosiolib/time.hpp>
+#include <eosio/asset.hpp>
+#include <eosio/eosio.hpp>
+#include <eosio/time.hpp>
+#include <eosio/crypto.hpp>
 
 namespace logic {
 static const uint8_t BOARD_WIDTH = 5;
@@ -33,7 +34,7 @@ static const void assert_no_duplicate_ships(const std::vector<uint8_t> &v) {
 
   // consecutive elements must now be different
   while (it != sorted.end() && (it + 1) != sorted.end()) {
-    eosio_assert(*it != *(it + 1), "duplicate ships");
+    eosio::check(*it != *(it + 1), "duplicate ships");
     it++;
   }
 }
@@ -88,11 +89,11 @@ struct board {
 
     // always do max attacks, except if there are not enough tiles to attack
     // left
-    eosio_assert(attacks.size() == expected_attacks,
+    eosio::check(attacks.size() == expected_attacks,
                  "incorrect amount of attacks");
 
     std::for_each(attacks.begin(), attacks.end(), [&](uint8_t tile_index) {
-      eosio_assert(tiles[tile_index] == UNKNOWN, "tile already attacked");
+      eosio::check(tiles[tile_index] == UNKNOWN, "tile already attacked");
       tiles[tile_index] = ATTACK_UNREVEALED;
     });
   }
@@ -102,7 +103,7 @@ struct board {
   void reveal(const std::vector<uint8_t> &attack_responses) {
     std::for_each(
         attack_responses.begin(), attack_responses.end(), [&](uint8_t r) {
-          eosio_assert(
+          eosio::check(
               r == ATTACK_MISS || r == ATTACK_SHIP1 || r == ATTACK_SHIP2 ||
                   r == ATTACK_SHIP3,
               "invalid attack response. must be 'miss' or a ship type");
@@ -112,13 +113,13 @@ struct board {
     int reveal_counter = 0;
     std::for_each(tiles.begin(), tiles.end(), [&](uint8_t &tile) {
       if (tile == ATTACK_UNREVEALED) {
-        eosio_assert(reveal_counter < attack_responses.size(),
+        eosio::check(reveal_counter < attack_responses.size(),
                      "must reveal all unrevealed attacks");
         tile = attack_responses[reveal_counter++];
       }
     });
 
-    eosio_assert(reveal_counter == attack_responses.size(),
+    eosio::check(reveal_counter == attack_responses.size(),
                  "tried to reveal more attacks than existant");
   }
 
@@ -137,12 +138,12 @@ struct board {
     for (int i = 0; i < 3; i++) {
       uint8_t ship_index = revealed_ship_indexes[i];
       // ship_index must be in range
-      eosio_assert(ship_index < TILES_SIZE, assert_message);
+      eosio::check(ship_index < TILES_SIZE, assert_message);
 
       uint8_t announced_tile = tiles[ship_index];
       // announced tile must not have been revealed yet or match the correct
       // ship
-      eosio_assert(announced_tile == UNKNOWN ||
+      eosio::check(announced_tile == UNKNOWN ||
                        announced_tile == ATTACK_UNREVEALED ||
                        announced_tile == (ATTACK_SHIP1 + i),
                    assert_message);
@@ -160,7 +161,7 @@ struct board {
 
       // every other tile must now either not have been revealed yet or
       // announced as a miss
-      eosio_assert(t == UNKNOWN || t == ATTACK_UNREVEALED || t == ATTACK_MISS,
+      eosio::check(t == UNKNOWN || t == ATTACK_UNREVEALED || t == ATTACK_MISS,
                    assert_message);
     }
 
