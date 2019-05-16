@@ -1,6 +1,6 @@
 const initEnvironment = require(`eosiac`)
 
-const { sendTransaction, env } = initEnvironment(`dev`, { verbose: true })
+const { sendTransaction, env } = initEnvironment(`jungle`, { verbose: true })
 
 const accounts = Object.keys(env.accounts)
 // 0,1,2

@@ -5,14 +5,9 @@
   "scripts": {
     "test": "jest --runInBand",
     "compile": "make -C build",
-    "compile_eosio": "eosio-cpp contract/cryptoship.cpp -o contract/cryptoship.wasm --abigen --contract=cryptoship",
-    "deploy": "npm run compile && node scripts/deploy.js",
-    "init": "node scripts/init.js",
-    "create_actions": "node scripts/create_actions/index.js",
-    "init_blockchain": "node scripts/init_blockchain/index.js",
+    "issue_eos": "node scripts/issue-eos.js",
     "action": "node scripts/action.js",
-    "table": "node scripts/table.js",
-    "apply": "eosiac apply"
+    "table": "node scripts/table.js"
   },
   "author": "Christoph Michel",
   "license": "MIT",

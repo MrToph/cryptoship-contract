@@ -25,13 +25,14 @@ const getLatestGame = async () =>
         .then(result => result.rows.pop())
 
 describe(`contract`, () => {
-    const p1ShipIndexes = [0, 1, 2]
+    const p1ShipIndexes = [2, 3, 4]
     const p1Seed = createSeed(p1ShipIndexes)
     const p1Commitment = createCommitment(p1Seed)
 
     const p2ShipIndexes = [21, 20, 19]
     const p2Seed = createSeed(p2ShipIndexes)
     const p2Commitment = createCommitment(p2Seed)
+
     beforeEach(async () => {
         await sendTransaction({
             account: CONTRACT_ACCOUNT,

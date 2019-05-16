@@ -1,13 +1,13 @@
 const fs = require(`fs`)
-const { api } = require(`../config`)
-const { getDeployableFilesFromDir } = require(`../utils`)
+const initEnvironment = require(`eosiac`)
 
-const { CONTRACT_ACCOUNT } = process.env
-const contractDir = `./build`
+const { api, env } = initEnvironment(`dev`, { verbose: true })
+
+const CONTRACT_ACCOUNT = Object.keys(env.accounts)[1]
 
 async function script() {
     const tableName = process.argv[2]
-    const { abiPath } = getDeployableFilesFromDir(contractDir)
+    const abiPath = `build/cryptoship.abi`
     const abi = JSON.parse(fs.readFileSync(abiPath, `utf8`))
     const validTableNames = abi.tables
         ? abi.tables.map(({ name }) => `"${name}"`).join(` `)

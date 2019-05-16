@@ -12,6 +12,7 @@ dev:
         type: key
         private_keys:
           - 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
+
     cryptoshipyy:
       signature:
         type: key
@@ -27,6 +28,7 @@ dev:
             - cryptoshipyy@eosio.code
       code: build/cryptoship.wasm
       abi: build/cryptoship.abi
+
     cryptoship11:
       signature:
         type: key
@@ -42,6 +44,7 @@ dev:
       tokens:
         - account: eosio.token
           amount: 10.0000 EOS
+
     cryptoship22:
       signature:
         type: key
@@ -57,6 +60,22 @@ dev:
       tokens:
         - account: eosio.token
           amount: 10.0000 EOS
+
+    eosio.token:
+      signature:
+        type: key
+        private_keys:
+          - 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
+      auth:
+        owner:
+          permissions:
+            - EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
+        active:
+          permissions:
+            - EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
+      code: eosio.token/eosio.token.wasm
+      abi: eosio.token/eosio.token.abi
+
 
 
 jungle:
@@ -96,7 +115,6 @@ jungle:
           permissions:
             - EOS7dbJSQxad9BwYVBSugD4J9fBWEkZXYLuVjhQTPUTRqmmpQDzqq
 
-
     cryptoshipxx:
       signature:
         type: scatter
@@ -108,7 +126,7 @@ jungle:
           permissions:
             - EOS5sLzxVAoaDHqsZv7Z6PSZiQYGeaFek98VnLup4UMm8pgpfCRY1
             - cryptoshipxx@eosio.code
-      ram: 1e6
+      ram: 1e5
       code: build/cryptoship.wasm
       abi: build/cryptoship.abi
 
