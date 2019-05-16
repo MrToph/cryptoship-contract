@@ -1,16 +1,15 @@
-const { api } = require(`../config`)
-const { sendTransaction, getErrorDetail } = require(`../utils`)
+const initEnvironment = require(`eosiac`)
 const { createSeed, createCommitment } = require(`./utils`)
 
-const { CONTRACT_ACCOUNT } = process.env
+const { api, sendTransaction, env } = initEnvironment(`dev`)
+
+const accounts = Object.keys(env.accounts)
+const CONTRACT_ACCOUNT = accounts[1]
+const PLAYER1 = accounts[2]
+const PLAYER2 = accounts[3]
 
 // running three actions sometimes goes beyond default 5s timeout
 jest.setTimeout(20000)
-
-const getPrintOutput = transaction =>
-    transaction.processed.action_traces
-        .map(trace => `${trace.console}${trace.inline_traces.map(t => `\n\t${t.console}`)}`)
-        .join(`\n`)
 
 const getLatestGame = async () =>
     api.rpc
@@ -26,16 +25,25 @@ const getLatestGame = async () =>
         .then(result => result.rows.pop())
 
 describe(`contract`, () => {
-    const p1ShipIndexes = [2, 3, 4]
+    const p1ShipIndexes = [0, 1, 2]
     const p1Seed = createSeed(p1ShipIndexes)
     const p1Commitment = createCommitment(p1Seed)
 
     const p2ShipIndexes = [21, 20, 19]
     const p2Seed = createSeed(p2ShipIndexes)
     const p2Commitment = createCommitment(p2Seed)
-
     beforeEach(async () => {
-        await sendTransaction({ name: `testreset`, data: { max_games: 0 } })
+        await sendTransaction({
+            account: CONTRACT_ACCOUNT,
+            authorization: [
+                {
+                    actor: CONTRACT_ACCOUNT,
+                    permission: `active`,
+                },
+            ],
+            name: `testreset`,
+            data: { max_games: 0 },
+        })
     })
 
     afterEach(async () => {
@@ -52,10 +60,16 @@ describe(`contract`, () => {
             // create
             result = await sendTransaction([
                 {
+                    account: CONTRACT_ACCOUNT,
                     name: `create`,
-                    actor: `test1`,
+                    authorization: [
+                        {
+                            actor: PLAYER1,
+                            permission: `active`,
+                        },
+                    ],
                     data: {
-                        player: `test1`,
+                        player: PLAYER1,
                         nonce: 0,
                         quantity: `0.1000 EOS`,
                         commitment: p1Commitment,
@@ -64,9 +78,14 @@ describe(`contract`, () => {
                 {
                     account: `eosio.token`,
                     name: `transfer`,
-                    actor: `test1`,
+                    authorization: [
+                        {
+                            actor: PLAYER1,
+                            permission: `active`,
+                        },
+                    ],
                     data: {
-                        from: `test1`,
+                        from: PLAYER1,
                         to: CONTRACT_ACCOUNT,
                         quantity: `0.1000 EOS`,
                         memo: `create`,
@@ -78,19 +97,30 @@ describe(`contract`, () => {
                 {
                     account: `eosio.token`,
                     name: `transfer`,
-                    actor: `test2`,
+                    authorization: [
+                        {
+                            actor: PLAYER2,
+                            permission: `active`,
+                        },
+                    ],
                     data: {
-                        from: `test2`,
+                        from: PLAYER2,
                         to: CONTRACT_ACCOUNT,
                         quantity: `0.1000 EOS`,
                         memo: `${gameId}`,
                     },
                 },
                 {
+                    account: CONTRACT_ACCOUNT,
                     name: `join`,
-                    actor: `test2`,
+                    authorization: [
+                        {
+                            actor: PLAYER2,
+                            permission: `active`,
+                        },
+                    ],
                     data: {
-                        player: `test2`,
+                        player: PLAYER2,
                         nonce: 0,
                         game_id: gameId,
                         commitment: p2Commitment,
@@ -101,10 +131,16 @@ describe(`contract`, () => {
             // round 1
             result = await sendTransaction([
                 {
+                    account: CONTRACT_ACCOUNT,
                     name: `attack`,
-                    actor: `test2`,
+                    authorization: [
+                        {
+                            actor: PLAYER2,
+                            permission: `active`,
+                        },
+                    ],
                     data: {
-                        player: `test2`,
+                        player: PLAYER2,
                         game_id: gameId,
                         attacks: [0, 1, 2, 3],
                     },
@@ -112,19 +148,31 @@ describe(`contract`, () => {
             ])
             result = await sendTransaction([
                 {
+                    account: CONTRACT_ACCOUNT,
                     name: `attack`,
-                    actor: `test1`,
+                    authorization: [
+                        {
+                            actor: PLAYER1,
+                            permission: `active`,
+                        },
+                    ],
                     data: {
-                        player: `test1`,
+                        player: PLAYER1,
                         game_id: gameId,
                         attacks: [21, 22, 23, 24],
                     },
                 },
                 {
+                    account: CONTRACT_ACCOUNT,
                     name: `reveal`,
-                    actor: `test1`,
+                    authorization: [
+                        {
+                            actor: PLAYER1,
+                            permission: `active`,
+                        },
+                    ],
                     data: {
-                        player: `test1`,
+                        player: PLAYER1,
                         game_id: gameId,
                         attack_responses: [2, 2, 3, 4],
                     },
@@ -134,19 +182,31 @@ describe(`contract`, () => {
             // round 2
             result = await sendTransaction([
                 {
+                    account: CONTRACT_ACCOUNT,
                     name: `reveal`,
-                    actor: `test2`,
+                    authorization: [
+                        {
+                            actor: PLAYER2,
+                            permission: `active`,
+                        },
+                    ],
                     data: {
-                        player: `test2`,
+                        player: PLAYER2,
                         game_id: gameId,
                         attack_responses: [3, 2, 2, 2],
                     },
                 },
                 {
+                    account: CONTRACT_ACCOUNT,
                     name: `attack`,
-                    actor: `test2`,
+                    authorization: [
+                        {
+                            actor: PLAYER2,
+                            permission: `active`,
+                        },
+                    ],
                     data: {
-                        player: `test2`,
+                        player: PLAYER2,
                         game_id: gameId,
                         attacks: [4, 5],
                     },
@@ -154,19 +214,31 @@ describe(`contract`, () => {
             ])
             result = await sendTransaction([
                 {
+                    account: CONTRACT_ACCOUNT,
                     name: `attack`,
-                    actor: `test1`,
+                    authorization: [
+                        {
+                            actor: PLAYER1,
+                            permission: `active`,
+                        },
+                    ],
                     data: {
-                        player: `test1`,
+                        player: PLAYER1,
                         game_id: gameId,
                         attacks: [20],
                     },
                 },
                 {
+                    account: CONTRACT_ACCOUNT,
                     name: `reveal`,
-                    actor: `test1`,
+                    authorization: [
+                        {
+                            actor: PLAYER1,
+                            permission: `active`,
+                        },
+                    ],
                     data: {
-                        player: `test1`,
+                        player: PLAYER1,
                         game_id: gameId,
                         attack_responses: [5, 2],
                     },
@@ -176,29 +248,47 @@ describe(`contract`, () => {
             // round 3
             result = await sendTransaction([
                 {
+                    account: CONTRACT_ACCOUNT,
                     name: `reveal`,
-                    actor: `test2`,
+                    authorization: [
+                        {
+                            actor: PLAYER2,
+                            permission: `active`,
+                        },
+                    ],
                     data: {
-                        player: `test2`,
+                        player: PLAYER2,
                         game_id: gameId,
                         attack_responses: [4],
                     },
                 },
                 {
+                    account: CONTRACT_ACCOUNT,
                     name: `decommit`,
-                    actor: `test2`,
+                    authorization: [
+                        {
+                            actor: PLAYER2,
+                            permission: `active`,
+                        },
+                    ],
                     data: {
-                        player: `test2`,
+                        player: PLAYER2,
                         game_id: gameId,
                         decommitment: p2Seed,
                     },
                 },
             ])
             result = await sendTransaction({
+                account: CONTRACT_ACCOUNT,
                 name: `decommit`,
-                actor: `test1`,
+                authorization: [
+                    {
+                        actor: PLAYER1,
+                        permission: `active`,
+                    },
+                ],
                 data: {
-                    player: `test1`,
+                    player: PLAYER1,
                     game_id: gameId,
                     decommitment: p1Seed,
                 },
@@ -208,7 +298,7 @@ describe(`contract`, () => {
             // P2 should have won, i.e. state 9
             return expect(game.game_data.state).toBe(9)
         } catch (ex) {
-            console.log(getErrorDetail(ex))
+            console.log(ex.message)
         }
     })
 })

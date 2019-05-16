@@ -11,7 +11,8 @@
     "create_actions": "node scripts/create_actions/index.js",
     "init_blockchain": "node scripts/init_blockchain/index.js",
     "action": "node scripts/action.js",
-    "table": "node scripts/table.js"
+    "table": "node scripts/table.js",
+    "apply": "eosiac apply"
   },
   "author": "Christoph Michel",
   "license": "MIT",

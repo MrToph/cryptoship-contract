@@ -3,19 +3,24 @@ const initEnvironment = require(`eosiac`)
 const { sendTransaction, env } = initEnvironment(`dev`, { verbose: true })
 
 const accounts = Object.keys(env.accounts)
+const gameId = `0`
 
 async function action() {
     try {
         await sendTransaction({
             account: accounts[1],
-            name: `cleanup`,
+            name: `attack`,
             authorization: [
                 {
-                    actor: accounts[2],
+                    actor: accounts[3],
                     permission: `active`,
                 },
             ],
-            data: {},
+            data: {
+                player: accounts[3],
+                game_id: gameId,
+                attacks: [0, 1, 2, 3],
+            },
         })
     } catch (error) {
         // ignore

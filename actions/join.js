@@ -1,27 +1,34 @@
-const { sendTransaction, getErrorDetail } = require(`../utils`)
+const initEnvironment = require(`eosiac`)
 
-const { CONTRACT_ACCOUNT } = process.env
+const { sendTransaction, env } = initEnvironment(`dev`, { verbose: true })
+
+const accounts = Object.keys(env.accounts)
+
+const gameId = 0
+// 21, 20, 19
+const p2Seed = `1514131bd3b0e2a57f5d67f202e46f122b920eb526cd613d80b9e7511db1f280`
+const p2Commitment = `f5b0e70b7e8f5c40225b7a36b3d14bfb025b0adc10da78a21820280eaa7d67e0`
 
 async function action() {
     try {
-        const transaction = await sendTransaction({
+        await sendTransaction({
+            account: accounts[1],
             name: `join`,
-            actor: CONTRACT_ACCOUNT,
+            authorization: [
+                {
+                    actor: accounts[3],
+                    permission: `active`,
+                },
+            ],
             data: {
-                player: `player`,
-                nonce: 58,
-                game_id: 648,
-                commitment: `commitment`,
+                player: accounts[3],
+                nonce: 0,
+                game_id: gameId,
+                commitment: p2Commitment,
             },
         })
-        console.log(`SUCCESS`)
-        console.log(
-            transaction.processed.action_traces
-                .map(trace => `${trace.console}${trace.inline_traces.map(t => `\n\t${t.console}`)}`)
-                .join(`\n`),
-        )
     } catch (error) {
-        console.error(`${getErrorDetail(error)}`)
+        // ignore
     }
 }
 

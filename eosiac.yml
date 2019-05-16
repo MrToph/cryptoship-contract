@@ -1,0 +1,141 @@
+---
+dev:
+  chain_id: cf057bbfb72640471fd910bcb67639c22df9f92470936cddc1ade0e2f2e7dc4f
+  node_endpoint: http://localhost:7777
+  accounts_manager: eosio # account signing the new_account actions (needed when creating the accounts for the first time)
+  funds_manager: eosio # account distributing tokens to accounts (liquid ones but also for staking)
+  ram_manager: eosio # account buying RAM for accounts
+
+  accounts:
+    eosio:
+      signature:
+        type: key
+        private_keys:
+          - 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
+    cryptoshipyy:
+      signature:
+        type: key
+        private_keys:
+          - 5Jm9jur6cWPjjdXF2K77oiJCsUrHWDg9WAXrVBP5k5hqTE9FMEn
+      auth:
+        owner:
+          permissions:
+            - EOS7sYBx3nRnZjm84n6RnzXqMP5mqghrTEsofvW4K2TmHGzLG2Pvz
+        active:
+          permissions:
+            - EOS7sYBx3nRnZjm84n6RnzXqMP5mqghrTEsofvW4K2TmHGzLG2Pvz
+            - cryptoshipyy@eosio.code
+      code: build/cryptoship.wasm
+      abi: build/cryptoship.abi
+    cryptoship11:
+      signature:
+        type: key
+        private_keys:
+          - 5JNRdBVjCbfQ6PDDYP8Ve58sARjVTeg39KoHw4u3sGsy3udkCpy
+      auth:
+        owner:
+          permissions:
+            - EOS7xnUczYWNinwmrrdPpTbxSueCrhmHZ4JT8dsZWYzuVPyX7mjFm
+        active:
+          permissions:
+            - EOS7xnUczYWNinwmrrdPpTbxSueCrhmHZ4JT8dsZWYzuVPyX7mjFm
+      tokens:
+        - account: eosio.token
+          amount: 10.0000 EOS
+    cryptoship22:
+      signature:
+        type: key
+        private_keys:
+          - 5KRFKp1GwjctR8mHa4CLoxBLJASszYU12wgwiaomUvgbTVhpip6
+      auth:
+        owner:
+          permissions:
+            - EOS6rngWWPR4WtncgbQzXCRdLnfhcCGa4Lg1UbuStbNqKvVXaxqMU
+        active:
+          permissions:
+            - EOS6rngWWPR4WtncgbQzXCRdLnfhcCGa4Lg1UbuStbNqKvVXaxqMU
+      tokens:
+        - account: eosio.token
+          amount: 10.0000 EOS
+
+
+jungle:
+  chain_id: e70aaab8997e1dfce58fbfac80cbbb8fecec7b99cf982a9444273cbc64c41473
+  node_endpoint: https://jungle2.cryptolions.io:443
+  accounts_manager: eosiactester
+  funds_manager: eosiactester
+  ram_manager: eosiactester
+
+  accounts:
+    eosiactester:
+      signature:
+        type: scatter
+      cpu:
+        - delegate_to: eosiactester
+          amount: 100000
+        - delegate_to: cryptoshipxx
+          amount: 50000
+        - delegate_to: cryptoship11
+          amount: 50000
+        - delegate_to: cryptoship22
+          amount: 50000
+      net:
+        - delegate_to: eosiactester
+          amount: 10000
+        - delegate_to: cryptoshipxx
+          amount: 10000
+        - delegate_to: cryptoship11
+          amount: 10000
+        - delegate_to: cryptoship22
+          amount: 10000
+      auth:
+        owner:
+          permissions:
+            - EOS7dbJSQxad9BwYVBSugD4J9fBWEkZXYLuVjhQTPUTRqmmpQDzqq
+        active:
+          permissions:
+            - EOS7dbJSQxad9BwYVBSugD4J9fBWEkZXYLuVjhQTPUTRqmmpQDzqq
+
+
+    cryptoshipxx:
+      signature:
+        type: scatter
+      auth:
+        owner:
+          permissions:
+            - EOS5sLzxVAoaDHqsZv7Z6PSZiQYGeaFek98VnLup4UMm8pgpfCRY1
+        active:
+          permissions:
+            - EOS5sLzxVAoaDHqsZv7Z6PSZiQYGeaFek98VnLup4UMm8pgpfCRY1
+            - cryptoshipxx@eosio.code
+      ram: 1e6
+      code: build/cryptoship.wasm
+      abi: build/cryptoship.abi
+
+    cryptoship11:
+      signature:
+        type: scatter
+      auth:
+        owner:
+          permissions:
+            - EOS5sLzxVAoaDHqsZv7Z6PSZiQYGeaFek98VnLup4UMm8pgpfCRY1
+        active:
+          permissions:
+            - EOS5sLzxVAoaDHqsZv7Z6PSZiQYGeaFek98VnLup4UMm8pgpfCRY1
+      tokens:
+        - account: eosio.token
+          amount: 10.0000 EOS
+
+    cryptoship22:
+      signature:
+        type: scatter
+      auth:
+        owner:
+          permissions:
+            - EOS5sLzxVAoaDHqsZv7Z6PSZiQYGeaFek98VnLup4UMm8pgpfCRY1
+        active:
+          permissions:
+            - EOS5sLzxVAoaDHqsZv7Z6PSZiQYGeaFek98VnLup4UMm8pgpfCRY1
+      tokens:
+        - account: eosio.token
+          amount: 10.0000 EOS
